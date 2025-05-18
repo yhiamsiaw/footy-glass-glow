@@ -1,10 +1,9 @@
-
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { MatchDetails as MatchDetailsType } from "@/types/football";
 import { MatchStatusBadge } from "@/components/MatchStatusBadge";
 import { getMatchStatusType } from "@/utils/api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, Clock, Home, Info } from "lucide-react";
+import { Calendar, Clock, Home, Info, User } from "lucide-react";
 
 interface MatchDetailsProps {
   match: MatchDetailsType;
@@ -32,6 +31,44 @@ export const MatchDetails = ({ match }: MatchDetailsProps) => {
     hour: "2-digit",
     minute: "2-digit",
   });
+  
+  // Field positions for lineup visualization
+  const getPositionClass = (pos: string, isHome: boolean) => {
+    const baseClass = "absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center";
+    
+    switch (pos) {
+      // Goalkeeper
+      case "G":
+        return `${baseClass} ${isHome ? "bottom-[5%] left-[50%]" : "top-[5%] left-[50%]"}`;
+      
+      // Defenders
+      case "D":
+      case "RB":
+      case "CB":
+      case "LB":
+        return `${baseClass} ${isHome ? "bottom-[20%] left-[50%]" : "top-[20%] left-[50%]"}`;
+      
+      // Midfielders
+      case "M":
+      case "CM":
+      case "RM":
+      case "LM":
+      case "CDM":
+      case "CAM":
+        return `${baseClass} ${isHome ? "bottom-[40%] left-[50%]" : "top-[40%] left-[50%]"}`;
+      
+      // Forwards
+      case "F":
+      case "ST":
+      case "CF":
+      case "RW":
+      case "LW":
+        return `${baseClass} ${isHome ? "bottom-[65%] left-[50%]" : "top-[65%] left-[50%]"}`;
+      
+      default:
+        return `${baseClass} ${isHome ? "bottom-[40%] left-[50%]" : "top-[40%] left-[50%]"}`;
+    }
+  };
 
   const renderEvents = () => {
     if (!events || events.length === 0) {
@@ -44,45 +81,50 @@ export const MatchDetails = ({ match }: MatchDetailsProps) => {
     return (
       <div className="space-y-3 p-4">
         {sortedEvents.map((event, index) => (
-          <div key={index} className="glass p-3 rounded-lg flex items-center gap-3">
-            <div className="min-w-[40px] text-center font-bold">
-              {event.time.elapsed}'
-              {event.time.extra && <span className="text-xs">+{event.time.extra}</span>}
+          <div key={index} className="bg-gray-800/50 p-4 rounded-lg flex items-center gap-3 hover:bg-gray-800 transition-colors">
+            <div className="min-w-[50px] text-center font-bold">
+              <span className="text-lg">{event.time.elapsed}'</span>
+              {event.time.extra && <span className="text-xs text-gray-400">+{event.time.extra}</span>}
             </div>
 
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <div className="flex-1">
-                  <p className="font-medium">
-                    {event.team.name === teams.home.name ? (
-                      <span>{event.player.name}</span>
-                    ) : (
-                      <span className="text-right block">{event.player.name}</span>
-                    )}
+            <div className="flex-1 flex items-center gap-4">
+              <div className="flex-1">
+                <p className={`font-medium text-sm ${event.team.name === teams.home.name ? "text-left" : "text-right"}`}>
+                  {event.player.name}
+                </p>
+                {event.assist && event.assist.name && (
+                  <p className={`text-xs text-gray-400 ${event.team.name === teams.home.name ? "text-left" : "text-right"}`}>
+                    Assist: {event.assist.name}
                   </p>
-                  {event.assist && event.assist.name && (
-                    <p className="text-xs text-muted-foreground">
-                      Assist: {event.assist.name}
-                    </p>
-                  )}
-                </div>
-                <div>
+                )}
+              </div>
+              
+              <div className="w-12 h-12 flex items-center justify-center rounded-full bg-gray-700">
+                {event.type === "Goal" && (
+                  <span className="text-2xl" role="img" aria-label="Goal">⚽</span>
+                )}
+                {event.type === "Card" && (
+                  <span className="text-2xl" role="img" aria-label={event.detail}>
+                    {event.detail === "Yellow Card" ? "🟨" : "🟥"}
+                  </span>
+                )}
+                {event.type === "subst" && (
+                  <span className="text-2xl" role="img" aria-label="Substitution">🔄</span>
+                )}
+              </div>
+              
+              <div className="flex-1">
+                <p className="font-medium text-sm">
                   {event.type === "Goal" && (
-                    <div className="text-sm font-semibold text-football-orange">
-                      ⚽ {event.detail}
-                    </div>
+                    <span className="text-yellow-400">{event.detail}</span>
                   )}
                   {event.type === "Card" && (
-                    <div className="text-sm font-semibold">
-                      {event.detail === "Yellow Card" ? "🟨" : "🟥"} {event.detail}
-                    </div>
+                    <span>{event.detail}</span>
                   )}
-                  {event.type === "Subst" && (
-                    <div className="text-sm font-semibold text-football-blue">
-                      🔄 Substitution
-                    </div>
+                  {event.type === "subst" && (
+                    <span className="text-blue-400">Substitution</span>
                   )}
-                </div>
+                </p>
               </div>
             </div>
           </div>
@@ -113,20 +155,40 @@ export const MatchDetails = ({ match }: MatchDetailsProps) => {
     ];
 
     return (
-      <div className="space-y-4 p-4">
+      <div className="space-y-6 p-4">
         {commonStats.map((statName, index) => {
           const homeStat = homeStats.find((s) => s.type === statName);
           const awayStat = awayStats.find((s) => s.type === statName);
 
           if (!homeStat && !awayStat) return null;
 
+          // Calculate percentages for the bar chart
+          const homeValue = parseFloat(homeStat?.value?.toString() || "0");
+          const awayValue = parseFloat(awayStat?.value?.toString() || "0");
+          const total = homeValue + awayValue;
+          const homePercentage = total > 0 ? (homeValue / total) * 100 : 50;
+          const awayPercentage = total > 0 ? (awayValue / total) * 100 : 50;
+
           return (
-            <div key={index} className="glass p-3 rounded-lg">
-              <div className="text-xs text-center mb-1 text-muted-foreground">{statName}</div>
-              <div className="flex items-center justify-between">
+            <div key={index} className="bg-gray-800/50 p-4 rounded-lg hover:bg-gray-800 transition-colors">
+              <div className="text-sm text-center mb-3 text-gray-300">{statName}</div>
+              
+              <div className="flex items-center justify-between mb-2">
                 <div className="w-[45%] text-right font-medium">{homeStat?.value || "0"}</div>
-                <div className="w-[10%] text-center text-xs text-muted-foreground">-</div>
+                <div className="w-[10%] text-center text-xs text-gray-400">vs</div>
                 <div className="w-[45%] text-left font-medium">{awayStat?.value || "0"}</div>
+              </div>
+              
+              {/* Bar chart */}
+              <div className="h-2 w-full flex rounded-full overflow-hidden">
+                <div 
+                  className="bg-blue-500" 
+                  style={{ width: `${homePercentage}%` }}
+                ></div>
+                <div 
+                  className="bg-red-500" 
+                  style={{ width: `${awayPercentage}%` }}
+                ></div>
               </div>
             </div>
           );
@@ -143,43 +205,101 @@ export const MatchDetails = ({ match }: MatchDetailsProps) => {
     const homeLineup = lineups.find(l => l.team.id === teams.home.id);
     const awayLineup = lineups.find(l => l.team.id === teams.away.id);
 
-    return (
-      <div className="p-4">
+    const TabContent = () => (
+      <>
         <div className="flex justify-between items-center gap-4 mb-6">
           <div className="text-center flex-1">
-            <h3 className="font-bold">{teams.home.name}</h3>
-            <p className="text-xs text-muted-foreground">
+            <h3 className="font-bold text-lg">{teams.home.name}</h3>
+            <p className="text-sm text-gray-400">
               Formation: {homeLineup?.formation || "N/A"}
             </p>
           </div>
           <div className="text-center flex-1">
-            <h3 className="font-bold">{teams.away.name}</h3>
-            <p className="text-xs text-muted-foreground">
+            <h3 className="font-bold text-lg">{teams.away.name}</h3>
+            <p className="text-sm text-gray-400">
               Formation: {awayLineup?.formation || "N/A"}
             </p>
           </div>
         </div>
 
-        <div className="glass p-3 rounded-lg mb-6">
+        {/* Field visualization */}
+        <div className="relative w-full h-[500px] bg-green-800 rounded-xl mb-8 overflow-hidden">
+          {/* Field markings */}
+          <div className="absolute top-0 left-0 w-full h-full">
+            <div className="absolute top-1/2 left-0 w-full h-[2px] bg-white/70 transform -translate-y-1/2"></div>
+            <div className="absolute top-1/2 left-1/2 w-[120px] h-[120px] border-2 border-white/70 rounded-full transform -translate-x-1/2 -translate-y-1/2"></div>
+            <div className="absolute top-0 left-0 w-full h-[100px] border-b-2 border-white/70"></div>
+            <div className="absolute bottom-0 left-0 w-full h-[100px] border-t-2 border-white/70"></div>
+          </div>
+          
+          {/* Home team players */}
+          {homeLineup?.startXI.map((player, idx) => {
+            // Calculate position based on formation and player role
+            const posClass = getPositionClass(player.player.pos, true);
+            // Add horizontal spread based on player index to prevent overlap
+            const spreadX = ((idx % 4) - 1.5) * 20;
+            
+            return (
+              <div 
+                key={`home-${idx}`} 
+                className={posClass}
+                style={{ marginLeft: `${spreadX}%` }}
+              >
+                <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
+                  <span className="text-xs font-bold">{player.player.number}</span>
+                </div>
+                <span className="text-xs font-medium mt-1 bg-black/50 px-1 py-0.5 rounded">
+                  {player.player.name.split(' ').pop()}
+                </span>
+              </div>
+            );
+          })}
+          
+          {/* Away team players */}
+          {awayLineup?.startXI.map((player, idx) => {
+            // Calculate position based on formation and player role
+            const posClass = getPositionClass(player.player.pos, false);
+            // Add horizontal spread based on player index to prevent overlap
+            const spreadX = ((idx % 4) - 1.5) * 20;
+            
+            return (
+              <div 
+                key={`away-${idx}`} 
+                className={posClass}
+                style={{ marginLeft: `${spreadX}%` }}
+              >
+                <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center">
+                  <span className="text-xs font-bold">{player.player.number}</span>
+                </div>
+                <span className="text-xs font-medium mt-1 bg-black/50 px-1 py-0.5 rounded">
+                  {player.player.name.split(' ').pop()}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        
+        {/* Traditional lineup lists */}
+        <div className="bg-gray-800/50 p-4 rounded-lg mb-6">
           <h4 className="text-center mb-3 font-medium">Starting XI</h4>
           <div className="flex">
-            <div className="flex-1 border-r border-white/10 pr-2">
+            <div className="flex-1 border-r border-white/10 pr-4">
               {homeLineup?.startXI.map((player, idx) => (
-                <div key={idx} className="text-sm py-1 flex items-center gap-2">
-                  <span className="w-5 text-center text-xs text-muted-foreground">
+                <div key={idx} className="text-sm py-1.5 flex items-center gap-2">
+                  <span className="w-6 text-center text-xs text-gray-400 font-medium">
                     {player.player.number}
                   </span>
                   <span className="flex-1">{player.player.name}</span>
-                  <span className="text-xs text-muted-foreground">{player.player.pos}</span>
+                  <span className="text-xs px-1.5 py-0.5 bg-gray-700 rounded text-gray-300">{player.player.pos}</span>
                 </div>
               ))}
             </div>
-            <div className="flex-1 pl-2">
+            <div className="flex-1 pl-4">
               {awayLineup?.startXI.map((player, idx) => (
-                <div key={idx} className="text-sm py-1 flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">{player.player.pos}</span>
+                <div key={idx} className="text-sm py-1.5 flex items-center gap-2">
+                  <span className="text-xs px-1.5 py-0.5 bg-gray-700 rounded text-gray-300">{player.player.pos}</span>
                   <span className="flex-1 text-right">{player.player.name}</span>
-                  <span className="w-5 text-center text-xs text-muted-foreground">
+                  <span className="w-6 text-center text-xs text-gray-400 font-medium">
                     {player.player.number}
                   </span>
                 </div>
@@ -188,26 +308,26 @@ export const MatchDetails = ({ match }: MatchDetailsProps) => {
           </div>
         </div>
 
-        <div className="glass p-3 rounded-lg">
+        <div className="bg-gray-800/50 p-4 rounded-lg">
           <h4 className="text-center mb-3 font-medium">Substitutes</h4>
           <div className="flex">
-            <div className="flex-1 border-r border-white/10 pr-2">
+            <div className="flex-1 border-r border-white/10 pr-4">
               {homeLineup?.substitutes.map((player, idx) => (
-                <div key={idx} className="text-sm py-1 flex items-center gap-2">
-                  <span className="w-5 text-center text-xs text-muted-foreground">
+                <div key={idx} className="text-sm py-1.5 flex items-center gap-2">
+                  <span className="w-6 text-center text-xs text-gray-400 font-medium">
                     {player.player.number}
                   </span>
                   <span className="flex-1">{player.player.name}</span>
-                  <span className="text-xs text-muted-foreground">{player.player.pos}</span>
+                  <span className="text-xs px-1.5 py-0.5 bg-gray-700 rounded text-gray-300">{player.player.pos}</span>
                 </div>
               ))}
             </div>
-            <div className="flex-1 pl-2">
+            <div className="flex-1 pl-4">
               {awayLineup?.substitutes.map((player, idx) => (
-                <div key={idx} className="text-sm py-1 flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">{player.player.pos}</span>
+                <div key={idx} className="text-sm py-1.5 flex items-center gap-2">
+                  <span className="text-xs px-1.5 py-0.5 bg-gray-700 rounded text-gray-300">{player.player.pos}</span>
                   <span className="flex-1 text-right">{player.player.name}</span>
-                  <span className="w-5 text-center text-xs text-muted-foreground">
+                  <span className="w-6 text-center text-xs text-gray-400 font-medium">
                     {player.player.number}
                   </span>
                 </div>
@@ -215,50 +335,65 @@ export const MatchDetails = ({ match }: MatchDetailsProps) => {
             </div>
           </div>
         </div>
+      </>
+    );
+
+    return (
+      <div className="p-4">
+        {TabContent()}
       </div>
     );
   };
 
   return (
-    <div className="glass animate-fade-in rounded-lg overflow-hidden">
-      <div className="p-5 border-b border-white/10">
-        <div className="flex justify-between items-center mb-3">
-          <div className="flex items-center gap-2">
+    <div className="rounded-lg overflow-hidden bg-gray-900/50 shadow-xl animate-fade-in">
+      <div className="p-6 border-b border-white/10">
+        <div className="flex justify-between items-center mb-4">
+          <Link 
+            to={`/league/${match.league.id}`}
+            className="flex items-center gap-2 hover:bg-gray-800/50 px-3 py-1.5 rounded-lg transition-colors"
+          >
             <img
               src={match.league.logo}
               alt={match.league.name}
               className="h-6 w-6 object-contain"
             />
-            <span className="text-sm font-medium">{match.league.name}</span>
-          </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-medium">{match.league.name}</span>
+              <span className="text-xs text-gray-400">{match.league.country}</span>
+            </div>
+          </Link>
+          
           <MatchStatusBadge 
             status={statusType}
             elapsed={fixture.status.elapsed}
-            className="ml-auto"
+            className="ml-auto text-sm px-2 py-1"
           />
         </div>
         
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center mb-8">
           <div className="flex flex-col items-center text-center w-1/3">
             <img
               src={teams.home.logo}
               alt={teams.home.name}
-              className="h-16 w-16 object-contain mb-2"
+              className="h-20 w-20 object-contain mb-3"
             />
-            <h3 className="font-bold">{teams.home.name}</h3>
+            <h3 className="font-bold text-xl">{teams.home.name}</h3>
           </div>
           
           <div className="flex flex-col items-center justify-center w-1/3">
-            <div className="text-3xl font-bold mb-1 flex items-center gap-2">
-              <span>{goals.home ?? 0}</span>
-              <span className="text-muted-foreground">:</span>
-              <span>{goals.away ?? 0}</span>
+            <div className="text-5xl font-bold mb-2 flex items-center gap-3">
+              <span className={teams.home.winner ? "text-white" : "text-gray-300"}>{goals.home ?? 0}</span>
+              <span className="text-muted-foreground">-</span>
+              <span className={teams.away.winner ? "text-white" : "text-gray-300"}>{goals.away ?? 0}</span>
             </div>
             
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-gray-400">
               {statusType === "HT" && "Half-Time"}
               {statusType === "FT" && "Full-Time"}
-              {statusType === "LIVE" && `${fixture.status.elapsed}' In Progress`}
+              {statusType === "LIVE" && (
+                <span className="font-medium text-red-400 animate-pulse">{`${fixture.status.elapsed}' In Progress`}</span>
+              )}
               {statusType === "UPCOMING" && matchTime}
             </div>
           </div>
@@ -267,13 +402,13 @@ export const MatchDetails = ({ match }: MatchDetailsProps) => {
             <img
               src={teams.away.logo}
               alt={teams.away.name}
-              className="h-16 w-16 object-contain mb-2"
+              className="h-20 w-20 object-contain mb-3"
             />
-            <h3 className="font-bold">{teams.away.name}</h3>
+            <h3 className="font-bold text-xl">{teams.away.name}</h3>
           </div>
         </div>
         
-        <div className="mt-4 flex items-center justify-center gap-4 text-xs text-muted-foreground">
+        <div className="flex items-center justify-center gap-6 text-xs text-gray-400">
           <div className="flex items-center gap-1">
             <Calendar className="h-3 w-3" />
             <span>{matchDate}</span>
@@ -290,7 +425,7 @@ export const MatchDetails = ({ match }: MatchDetailsProps) => {
           )}
           {fixture.referee && (
             <div className="flex items-center gap-1">
-              <Info className="h-3 w-3" />
+              <User className="h-3 w-3" />
               <span>Referee: {fixture.referee}</span>
             </div>
           )}
@@ -298,11 +433,11 @@ export const MatchDetails = ({ match }: MatchDetailsProps) => {
       </div>
       
       {/* Match details tabs */}
-      <Tabs defaultValue="events">
+      <Tabs defaultValue="events" className="w-full">
         <TabsList className="w-full grid grid-cols-3 rounded-none border-b border-white/10">
-          <TabsTrigger value="events">Events</TabsTrigger>
-          <TabsTrigger value="stats">Statistics</TabsTrigger>
-          <TabsTrigger value="lineup">Lineups</TabsTrigger>
+          <TabsTrigger value="events" className="text-sm">Events</TabsTrigger>
+          <TabsTrigger value="stats" className="text-sm">Statistics</TabsTrigger>
+          <TabsTrigger value="lineup" className="text-sm">Lineups</TabsTrigger>
         </TabsList>
         <TabsContent value="events">{renderEvents()}</TabsContent>
         <TabsContent value="stats">{renderStats()}</TabsContent>

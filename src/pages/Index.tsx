@@ -1,17 +1,18 @@
 
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Match, League } from "@/types/football";
+import { Match, League, TopLeague } from "@/types/football";
 import { LeagueSection } from "@/components/LeagueSection";
-import { SearchBar } from "@/components/SearchBar";
+import { MainHeader } from "@/components/MainHeader";
+import { Sidebar } from "@/components/Sidebar";
 import { FixtureStatus, getLiveMatches, getTopLeagues, getTodayDate, getFixturesByDate, getMatchStatusType } from "@/utils/api";
 import { useToast } from "@/hooks/use-toast";
-import { Home, Info, Mail } from "lucide-react";
+import { ApiCache } from "@/utils/apiCache";
 
 const Index = () => {
   const [matches, setMatches] = useState<Match[]>([]);
   const [leagues, setLeagues] = useState<League[]>([]);
-  const [topLeagues, setTopLeagues] = useState<any[]>([]);
+  const [topLeagues, setTopLeagues] = useState<TopLeague[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"all" | "live" | "finished" | "scheduled">("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -19,12 +20,25 @@ const Index = () => {
 
   const { toast } = useToast();
 
+  // Priority leagues IDs (top leagues - should match the IDs from getTopLeagues)
+  const priorityLeagueIds = [39, 140, 78, 135, 61, 2];
+
   // Fetch top leagues
   useEffect(() => {
     const fetchTopLeagues = async () => {
       try {
+        // Check cache first
+        const cachedLeagues = ApiCache.get('topLeagues');
+        if (cachedLeagues) {
+          setTopLeagues(cachedLeagues);
+          return;
+        }
+
         const leagues = await getTopLeagues();
         setTopLeagues(leagues);
+        
+        // Cache the result
+        ApiCache.set('topLeagues', leagues, 24 * 60 * 60 * 1000); // Cache for 24 hours
       } catch (error) {
         console.error("Error fetching top leagues:", error);
       }
@@ -39,25 +53,40 @@ const Index = () => {
       setLoading(true);
       try {
         let matchesData: Match[];
+        let cacheKey = '';
 
         if (activeTab === "live") {
-          matchesData = await getLiveMatches();
-        } else if (activeTab === "all" || activeTab === "finished" || activeTab === "scheduled") {
-          const todayDate = getTodayDate();
-          matchesData = await getFixturesByDate(todayDate);
+          cacheKey = 'liveMatches';
+          const cachedMatches = ApiCache.get(cacheKey);
           
-          // Filter based on the active tab
-          if (activeTab === "finished") {
-            matchesData = matchesData.filter((match) => 
-              getMatchStatusType(match.fixture.status.short) === "FT"
-            );
-          } else if (activeTab === "scheduled") {
-            matchesData = matchesData.filter((match) => 
-              getMatchStatusType(match.fixture.status.short) === "UPCOMING"
-            );
+          if (cachedMatches && Date.now() - ApiCache.getTimestamp(cacheKey) < 60000) { // 1 minute cache for live
+            matchesData = cachedMatches;
+          } else {
+            matchesData = await getLiveMatches();
+            ApiCache.set(cacheKey, matchesData, 60000); // Cache for 1 minute
           }
         } else {
-          matchesData = [];
+          const todayDate = getTodayDate();
+          cacheKey = `fixtures_${todayDate}_${activeTab}`;
+          const cachedMatches = ApiCache.get(cacheKey);
+          
+          if (cachedMatches && Date.now() - ApiCache.getTimestamp(cacheKey) < 300000) { // 5 minutes cache
+            matchesData = cachedMatches;
+          } else {
+            matchesData = await getFixturesByDate(todayDate);
+            ApiCache.set(cacheKey, matchesData, 300000); // Cache for 5 minutes
+            
+            // Filter based on the active tab
+            if (activeTab === "finished") {
+              matchesData = matchesData.filter((match) => 
+                getMatchStatusType(match.fixture.status.short) === "FT"
+              );
+            } else if (activeTab === "scheduled") {
+              matchesData = matchesData.filter((match) => 
+                getMatchStatusType(match.fixture.status.short) === "UPCOMING"
+              );
+            }
+          }
         }
 
         // Apply status filter if any
@@ -116,10 +145,19 @@ const Index = () => {
 
   // Group matches by league
   const matchesByLeague = leagues.map(league => {
+    const isPriority = priorityLeagueIds.includes(league.id);
     return {
       league,
-      matches: matches.filter(match => match.league.id === league.id)
+      matches: matches.filter(match => match.league.id === league.id),
+      isPriority
     };
+  });
+
+  // Sort leagues to show priority leagues first
+  const sortedMatchesByLeague = [...matchesByLeague].sort((a, b) => {
+    if (a.isPriority && !b.isPriority) return -1;
+    if (!a.isPriority && b.isPriority) return 1;
+    return 0;
   });
 
   const handleSearch = (query: string) => {
@@ -139,82 +177,36 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-[#0c1218] text-white flex">
       {/* Left Column - Navigation */}
-      <div className="w-60 bg-[#0a111a] border-r border-gray-800 min-h-screen fixed left-0 top-0">
-        {/* Logo header */}
-        <div className="p-4 border-b border-gray-800">
-          <h1 className="text-xl font-bold text-white">LIVESCORE</h1>
-        </div>
-        
-        {/* Main navigation */}
-        <div className="p-4">
-          <nav className="space-y-1">
-            <Link to="/" className="flex items-center gap-2 p-2 bg-blue-900/30 rounded">
-              <Home size={16} />
-              <span>Home</span>
-            </Link>
-            <Link to="/about" className="flex items-center gap-2 p-2 hover:bg-gray-800 rounded">
-              <Info size={16} />
-              <span>About Us</span>
-            </Link>
-            <Link to="/contact" className="flex items-center gap-2 p-2 hover:bg-gray-800 rounded">
-              <Mail size={16} />
-              <span>Contact Us</span>
-            </Link>
-          </nav>
-        </div>
-        
-        {/* Pinned Leagues */}
-        <div className="mt-6">
-          <div className="px-4 py-2 text-xs text-gray-400 uppercase">Pinned Leagues</div>
-          <div className="space-y-1 px-4">
-            {topLeagues.length > 0 ? (
-              topLeagues.map((league) => (
-                <Link 
-                  key={league.id} 
-                  to={`/league/${league.id}`}
-                  className="flex items-center gap-2 p-2 hover:bg-gray-800 rounded"
-                >
-                  <img src={league.logo} alt={league.name} className="h-4 w-4" />
-                  <span className="text-sm">{league.name}</span>
-                </Link>
-              ))
-            ) : (
-              <div className="py-2 px-4 text-sm text-gray-400">Loading leagues...</div>
-            )}
-          </div>
-        </div>
-      </div>
+      <Sidebar leagues={topLeagues} loading={topLeagues.length === 0} />
       
       {/* Middle Column - Content */}
       <div className="flex-1 ml-60 mr-60">
-        {/* Top bar */}
-        <div className="sticky top-0 bg-[#0c1218] border-b border-gray-800 z-10">
-          <div className="flex items-center px-4 py-3">
-            <SearchBar onSearch={handleSearch} onStatusFilter={handleStatusFilter} />
-          </div>
-          
-          {/* Tab navigation */}
+        {/* Top header with search and filters */}
+        <MainHeader onSearch={handleSearch} onStatusFilter={handleStatusFilter} />
+        
+        {/* Tab navigation */}
+        <div className="sticky top-0 z-10 bg-[#0c1218] border-b border-gray-800">
           <div className="flex border-b border-gray-800">
             <button 
-              className={`px-4 py-2 text-xs font-medium ${activeTab === 'all' ? 'text-white border-b-2 border-blue-500' : 'text-gray-400'}`}
+              className={`px-4 py-2.5 text-xs font-medium ${activeTab === 'all' ? 'text-white border-b-2 border-blue-500' : 'text-gray-400'}`}
               onClick={() => setActiveTab("all")}
             >
               ALL
             </button>
             <button 
-              className={`px-4 py-2 text-xs font-medium ${activeTab === 'live' ? 'text-white border-b-2 border-blue-500' : 'text-gray-400'}`}
+              className={`px-4 py-2.5 text-xs font-medium ${activeTab === 'live' ? 'text-white border-b-2 border-blue-500' : 'text-gray-400'}`}
               onClick={() => setActiveTab("live")}
             >
               LIVE
             </button>
             <button 
-              className={`px-4 py-2 text-xs font-medium ${activeTab === 'finished' ? 'text-white border-b-2 border-blue-500' : 'text-gray-400'}`}
+              className={`px-4 py-2.5 text-xs font-medium ${activeTab === 'finished' ? 'text-white border-b-2 border-blue-500' : 'text-gray-400'}`}
               onClick={() => setActiveTab("finished")}
             >
               FINISHED
             </button>
             <button 
-              className={`px-4 py-2 text-xs font-medium ${activeTab === 'scheduled' ? 'text-white border-b-2 border-blue-500' : 'text-gray-400'}`}
+              className={`px-4 py-2.5 text-xs font-medium ${activeTab === 'scheduled' ? 'text-white border-b-2 border-blue-500' : 'text-gray-400'}`}
               onClick={() => setActiveTab("scheduled")}
             >
               SCHEDULED
@@ -227,7 +219,7 @@ const Index = () => {
         </div>
         
         {/* Match content */}
-        <div className="py-2">
+        <div className="py-4 px-2">
           {loading ? (
             <div className="space-y-4 p-4">
               {[...Array(3)].map((_, i) => (
@@ -242,8 +234,13 @@ const Index = () => {
               ))}
             </div>
           ) : matches.length > 0 ? (
-            matchesByLeague.map(({ league, matches }) => (
-              <LeagueSection key={league.id} league={league} matches={matches} />
+            sortedMatchesByLeague.map(({ league, matches, isPriority }) => (
+              <LeagueSection 
+                key={league.id} 
+                league={league} 
+                matches={matches} 
+                isPriority={isPriority}
+              />
             ))
           ) : (
             <div className="p-8 text-center">

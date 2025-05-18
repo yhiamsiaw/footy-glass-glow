@@ -32,12 +32,11 @@ export const MatchCard = ({ match, className }: MatchCardProps) => {
     <Link
       to={`/match/${fixture.id}`}
       className={cn(
-        "flex items-center hover:bg-white/5 border-b border-gray-800 transition-colors py-2",
+        "flex items-center hover:bg-white/5 transition-colors py-3 px-2 border-b border-gray-800",
         isLive ? "border-l-2 border-l-red-500" : "",
         className
       )}
     >
-      {/* Star/favorite icon could go here */}
       <div className="w-12 text-center text-xs text-gray-400">
         {statusType === "UPCOMING" ? (
           matchTime
@@ -49,13 +48,13 @@ export const MatchCard = ({ match, className }: MatchCardProps) => {
         )}
       </div>
       
-      <div className="flex flex-1 items-center">
+      <div className="flex flex-1 items-center px-3">
         <div className="flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3 mb-2.5">
             <img
               src={teams.home.logo}
               alt={teams.home.name}
-              className="h-4 w-4 object-contain"
+              className="h-5 w-5 object-contain"
               loading="lazy"
             />
             <span className={cn(
@@ -65,11 +64,11 @@ export const MatchCard = ({ match, className }: MatchCardProps) => {
               {teams.home.name}
             </span>
           </div>
-          <div className="flex items-center gap-2 mt-1">
+          <div className="flex items-center gap-3">
             <img
               src={teams.away.logo}
               alt={teams.away.name}
-              className="h-4 w-4 object-contain"
+              className="h-5 w-5 object-contain"
               loading="lazy"
             />
             <span className={cn(
@@ -81,26 +80,13 @@ export const MatchCard = ({ match, className }: MatchCardProps) => {
           </div>
         </div>
         
-        <div className="w-8 text-center font-bold">
+        <div className="w-8 text-center font-medium">
           {statusType !== "UPCOMING" && (
             <>
-              <div className="text-sm">{goals.home}</div>
+              <div className="text-sm mb-2.5">{goals.home}</div>
               <div className="text-sm">{goals.away}</div>
             </>
           )}
-        </div>
-        
-        <div className="w-12 flex justify-center">
-          <div className="flex flex-col items-center gap-1">
-            {/* Match actions - could be stats, details buttons */}
-            <button className="text-gray-400 hover:text-white">
-              <span className="sr-only">Match details</span>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect width="18" height="18" x="3" y="3" rx="2" />
-                <path d="M7 7h.01M12 7h.01M17 7h.01M7 12h.01M12 12h.01M17 12h.01M7 17h.01M12 17h.01M17 17h.01" />
-              </svg>
-            </button>
-          </div>
         </div>
       </div>
     </Link>
