@@ -192,5 +192,3 @@ export const getMatchStatusType = (status: string, elapsed?: number): FixtureSta
   return "UPCOMING";
 };
 
-// This type wasn't declared above, define it here
-export type FixtureStatus = "LIVE" | "HT" | "FT" | "UPCOMING" | "CANCELED";
