@@ -24,7 +24,7 @@ export const LeagueStandings = ({ leagueId, season = 2024 }: LeagueStandingsProp
         const cachedStandings = ApiCache.get(cacheKey);
         
         if (cachedStandings) {
-          setStandings(cachedStandings);
+          setStandings(cachedStandings as any[]);
           setLoading(false);
           return;
         }

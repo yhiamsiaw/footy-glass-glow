@@ -141,4 +141,5 @@ export interface TopLeague {
   name: string;
   logo: string;
   country: string;
+  flag: string;
 }

@@ -30,7 +30,7 @@ const Index = () => {
         // Check cache first
         const cachedLeagues = ApiCache.get('topLeagues');
         if (cachedLeagues) {
-          setTopLeagues(cachedLeagues);
+          setTopLeagues(cachedLeagues as TopLeague[]);
           return;
         }
 
@@ -52,7 +52,7 @@ const Index = () => {
     const fetchMatches = async () => {
       setLoading(true);
       try {
-        let matchesData: Match[];
+        let matchesData: Match[] = [];
         let cacheKey = '';
 
         if (activeTab === "live") {
@@ -60,7 +60,7 @@ const Index = () => {
           const cachedMatches = ApiCache.get(cacheKey);
           
           if (cachedMatches && Date.now() - ApiCache.getTimestamp(cacheKey) < 60000) { // 1 minute cache for live
-            matchesData = cachedMatches;
+            matchesData = cachedMatches as Match[];
           } else {
             matchesData = await getLiveMatches();
             ApiCache.set(cacheKey, matchesData, 60000); // Cache for 1 minute
@@ -71,7 +71,7 @@ const Index = () => {
           const cachedMatches = ApiCache.get(cacheKey);
           
           if (cachedMatches && Date.now() - ApiCache.getTimestamp(cacheKey) < 300000) { // 5 minutes cache
-            matchesData = cachedMatches;
+            matchesData = cachedMatches as Match[];
           } else {
             matchesData = await getFixturesByDate(todayDate);
             ApiCache.set(cacheKey, matchesData, 300000); // Cache for 5 minutes

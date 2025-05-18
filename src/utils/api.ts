@@ -1,5 +1,5 @@
 
-import { ApiResponse, Match, MatchDetails, TopLeague } from "../types/football";
+import { ApiResponse, Match, MatchDetails, TopLeague, FixtureStatus } from "../types/football";
 import { toast } from "@/hooks/use-toast";
 import { ApiCache } from "./apiCache";
 
@@ -69,7 +69,7 @@ export const getMatchDetails = async (fixtureId: number): Promise<MatchDetails> 
   const cachedData = ApiCache.get(cacheKey);
   
   if (cachedData && Date.now() - ApiCache.getTimestamp(cacheKey) < 60000) { // 1 minute cache
-    return cachedData;
+    return cachedData as MatchDetails;
   }
   
   const [fixtureData, lineups, events, stats] = await Promise.all([
@@ -80,7 +80,7 @@ export const getMatchDetails = async (fixtureId: number): Promise<MatchDetails> 
   ]);
 
   // Merge all the data into a single MatchDetails object
-  const matchDetails = {
+  const matchDetails: MatchDetails = {
     ...fixtureData.response[0],
     lineups: lineups.response,
     events: events.response,
@@ -111,12 +111,12 @@ export const getTopLeagues = async (): Promise<TopLeague[]> => {
   const cachedData = ApiCache.get(cacheKey);
   
   if (cachedData && Date.now() - ApiCache.getTimestamp(cacheKey) < 24 * 60 * 60 * 1000) { // 24 hour cache
-    return cachedData;
+    return cachedData as TopLeague[];
   }
   
   const data = await fetchFromApi<ApiResponse<any[]>>(`/leagues?id=${leagueIds.join(',')}`, "leagues");
   
-  const leagues = data.response.map(item => ({
+  const leagues: TopLeague[] = data.response.map(item => ({
     id: item.league.id,
     name: item.league.name,
     logo: item.league.logo,

@@ -4,7 +4,7 @@ import { useParams, Link, useLocation } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
 import { LeagueStandings } from "@/components/LeagueStandings";
 import { getTopLeagues, getFixturesByDate, getTodayDate } from "@/utils/api";
-import { Match } from "@/types/football";
+import { Match, TopLeague } from "@/types/football";
 import { Calendar, ChevronLeft, Table } from "lucide-react";
 import { MatchCard } from "@/components/MatchCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,9 +14,9 @@ import { ApiCache } from "@/utils/apiCache";
 const LeaguePage = () => {
   const { id, section } = useParams<{ id: string, section?: string }>();
   const location = useLocation();
-  const [league, setLeague] = useState<any>(null);
+  const [league, setLeague] = useState<TopLeague | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
-  const [topLeagues, setTopLeagues] = useState<any[]>([]);
+  const [topLeagues, setTopLeagues] = useState<TopLeague[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -31,13 +31,14 @@ const LeaguePage = () => {
       try {
         // First check if this league is in the top leagues
         const cachedTopLeagues = ApiCache.get('topLeagues');
-        let leaguesData = cachedTopLeagues;
+        let leaguesData: TopLeague[] = [];
         
-        if (!leaguesData) {
+        if (!cachedTopLeagues) {
           leaguesData = await getTopLeagues();
           setTopLeagues(leaguesData);
         } else {
-          setTopLeagues(cachedTopLeagues);
+          leaguesData = cachedTopLeagues as TopLeague[];
+          setTopLeagues(leaguesData);
         }
         
         const foundLeague = leaguesData.find(league => league.id === parseInt(id));
@@ -72,7 +73,7 @@ const LeaguePage = () => {
         const cachedMatches = ApiCache.get(cacheKey);
         
         if (cachedMatches) {
-          setMatches(cachedMatches);
+          setMatches(cachedMatches as Match[]);
           setLoading(false);
           return;
         }

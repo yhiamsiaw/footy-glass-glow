@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { MatchDetails } from "@/components/MatchDetails";
@@ -7,12 +6,13 @@ import { ChevronLeft } from "lucide-react";
 import { getMatchDetails, getTopLeagues } from "@/utils/api";
 import { useToast } from "@/hooks/use-toast";
 import { ApiCache } from "@/utils/apiCache";
+import { MatchDetails as MatchDetailsType, TopLeague } from "@/types/football";
 
 const MatchDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
-  const [match, setMatch] = useState<any>(null);
+  const [match, setMatch] = useState<MatchDetailsType | null>(null);
   const [loading, setLoading] = useState(true);
-  const [topLeagues, setTopLeagues] = useState<any[]>([]);
+  const [topLeagues, setTopLeagues] = useState<TopLeague[]>([]);
   const { toast } = useToast();
 
   // Fetch top leagues for the sidebar
@@ -22,7 +22,7 @@ const MatchDetailsPage = () => {
         // Check cache first
         const cachedLeagues = ApiCache.get('topLeagues');
         if (cachedLeagues) {
-          setTopLeagues(cachedLeagues);
+          setTopLeagues(cachedLeagues as TopLeague[]);
           return;
         }
 
@@ -52,7 +52,7 @@ const MatchDetailsPage = () => {
         // Check cache first
         const cachedMatch = ApiCache.get(cacheKey);
         if (cachedMatch && Date.now() - ApiCache.getTimestamp(cacheKey) < 60000) { // 1 minute cache for match details
-          setMatch(cachedMatch);
+          setMatch(cachedMatch as MatchDetailsType);
           setLoading(false);
           return;
         }
@@ -87,7 +87,7 @@ const MatchDetailsPage = () => {
     }, 60000); // Update every minute for live matches
     
     return () => clearInterval(refreshInterval);
-  }, [id, toast]);
+  }, [id, toast, match]);
 
   return (
     <div className="min-h-screen bg-[#0c1218] text-white flex">

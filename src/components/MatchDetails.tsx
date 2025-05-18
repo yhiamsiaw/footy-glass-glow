@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { MatchDetails as MatchDetailsType } from "@/types/football";
+import { Link } from "react-router-dom";
+import { MatchDetails as MatchDetailsType, EventType } from "@/types/football";
 import { MatchStatusBadge } from "@/components/MatchStatusBadge";
 import { getMatchStatusType } from "@/utils/api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -108,7 +109,7 @@ export const MatchDetails = ({ match }: MatchDetailsProps) => {
                     {event.detail === "Yellow Card" ? "🟨" : "🟥"}
                   </span>
                 )}
-                {event.type === "subst" && (
+                {event.type === "Subst" && (
                   <span className="text-2xl" role="img" aria-label="Substitution">🔄</span>
                 )}
               </div>
@@ -121,7 +122,7 @@ export const MatchDetails = ({ match }: MatchDetailsProps) => {
                   {event.type === "Card" && (
                     <span>{event.detail}</span>
                   )}
-                  {event.type === "subst" && (
+                  {event.type === "Subst" && (
                     <span className="text-blue-400">Substitution</span>
                   )}
                 </p>
