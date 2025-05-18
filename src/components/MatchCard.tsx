@@ -1,7 +1,7 @@
 
 import { Link } from "react-router-dom";
 import { Match } from "@/types/football";
-import { MatchStatusBadge } from "@/components/ui/Badge";
+import { MatchStatusBadge } from "@/components/MatchStatusBadge";
 import { getMatchStatusType } from "@/utils/api";
 import { cn } from "@/lib/utils";
 

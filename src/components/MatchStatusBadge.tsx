@@ -15,14 +15,12 @@ export const MatchStatusBadge = ({ status, elapsed, className }: BadgeProps) => 
     "badge-upcoming": status === "UPCOMING" || status === "HT",
   }, className);
 
-  let text = status;
-  if (status === "LIVE" && elapsed) {
-    text = `${elapsed}'`;
-  }
+  // Display status text, show elapsed minutes for LIVE matches
+  const displayText = status === "LIVE" && elapsed ? `${elapsed}'` : status;
 
   return (
     <span className={badgeClass}>
-      {text}
+      {displayText}
     </span>
   );
 };

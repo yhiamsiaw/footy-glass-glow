@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { MatchDetails as MatchDetailsType } from "@/types/football";
-import { MatchStatusBadge } from "@/components/ui/Badge";
+import { MatchStatusBadge } from "@/components/MatchStatusBadge";
 import { getMatchStatusType } from "@/utils/api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, Clock, Home, Info } from "lucide-react";
