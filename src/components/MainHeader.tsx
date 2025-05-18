@@ -1,8 +1,8 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Search, Facebook, Twitter, Instagram } from "lucide-react";
-import { FixtureStatus, getMatchStatusType } from "@/utils/api";
+import { FixtureStatus } from "@/types/football";
+import { getMatchStatusType } from "@/utils/api";
 
 interface MainHeaderProps {
   onSearch: (query: string) => void;

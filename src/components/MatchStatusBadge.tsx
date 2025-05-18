@@ -1,6 +1,5 @@
-
 import { cn } from "@/lib/utils";
-import { FixtureStatus } from "@/utils/api";
+import { FixtureStatus } from "@/types/football";
 
 interface BadgeProps {
   status: FixtureStatus;

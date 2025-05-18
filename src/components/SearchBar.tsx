@@ -1,7 +1,7 @@
-
 import { useState } from "react";
 import { Search, Calendar, Clock } from "lucide-react";
-import { FixtureStatus, getMatchStatusType } from "@/utils/api";
+import { FixtureStatus } from "@/types/football";
+import { getMatchStatusType } from "@/utils/api";
 
 interface SearchBarProps {
   onSearch: (query: string) => void;

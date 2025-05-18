@@ -1,4 +1,3 @@
-
 import { ApiResponse, Match, MatchDetails, TopLeague, FixtureStatus } from "../types/football";
 import { toast } from "@/hooks/use-toast";
 import { ApiCache } from "./apiCache";
@@ -191,4 +190,3 @@ export const getMatchStatusType = (status: string, elapsed?: number): FixtureSta
   
   return "UPCOMING";
 };
-

@@ -1,11 +1,11 @@
 
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Match, League, TopLeague } from "@/types/football";
+import { Match, League, TopLeague, FixtureStatus } from "@/types/football";
 import { LeagueSection } from "@/components/LeagueSection";
 import { MainHeader } from "@/components/MainHeader";
 import { Sidebar } from "@/components/Sidebar";
-import { FixtureStatus, getLiveMatches, getTopLeagues, getTodayDate, getFixturesByDate, getMatchStatusType } from "@/utils/api";
+import { getLiveMatches, getTopLeagues, getTodayDate, getFixturesByDate, getMatchStatusType } from "@/utils/api";
 import { useToast } from "@/hooks/use-toast";
 import { ApiCache } from "@/utils/apiCache";
 
