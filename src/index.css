@@ -7,44 +7,35 @@
 
 @layer base {
   :root {
-    --background: 210 40% 2%;
-    --foreground: 210 40% 98%;
+    --background: 210 40% 8%;
+    --foreground: 0 0% 100%;
 
-    --card: 210 40% 5%;
-    --card-foreground: 210 40% 98%;
+    --card: 214 40% 12%;
+    --card-foreground: 0 0% 100%;
 
-    --popover: 210 40% 5%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 214 40% 12%;
+    --popover-foreground: 0 0% 100%;
 
-    --primary: 25 95% 53%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 210 100% 50%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 199 89% 48%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 25 95% 53%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 40% 15%;
+    --muted: 214 40% 15%;
     --muted-foreground: 210 40% 70%;
 
-    --accent: 199 89% 48%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 210 100% 50%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 210 40% 15%;
-    --input: 210 40% 15%;
+    --border: 214 40% 15%;
+    --input: 214 40% 15%;
     --ring: 210 40% 70%;
 
-    --radius: 0.5rem;
-
-    --sidebar-background: 210 40% 8%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 25 95% 53%;
-    --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 210 40% 12%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 210 40% 15%;
-    --sidebar-ring: 210 40% 70%;
+    --radius: 0.375rem;
   }
 }
 
@@ -55,31 +46,46 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: 'Inter', sans-serif;
   }
   
-  /* Glassmorphism classes */
-  .glass {
-    @apply bg-white/5 backdrop-blur-md border border-white/10 shadow-lg;
+  /* FlashScore-inspired styles */
+  .fs-header {
+    @apply bg-[#0a111a] h-14 border-b border-gray-800;
   }
   
-  .glass-card {
-    @apply glass rounded-lg transition-all hover:bg-white/10;
+  .fs-body {
+    @apply bg-[#0c1218];
   }
   
-  .glass-sidebar {
-    @apply bg-sidebar/80 backdrop-blur-md border-r border-white/10;
+  .fs-sidebar {
+    @apply bg-[#0a111a] border-r border-gray-800;
   }
   
   /* Match status badges */
-  .badge-live {
-    @apply bg-football-status-live/20 text-football-status-live border border-football-status-live/30 px-2 py-0.5 rounded-full text-xs font-medium animate-pulse;
+  .status-live {
+    @apply bg-red-600/20 text-red-500 px-1.5 py-0.5 rounded text-xs font-medium;
   }
   
-  .badge-finished {
-    @apply bg-football-status-finished/20 text-football-status-finished border border-football-status-finished/30 px-2 py-0.5 rounded-full text-xs font-medium;
+  .status-finished {
+    @apply bg-gray-600/20 text-gray-500 px-1.5 py-0.5 rounded text-xs font-medium;
   }
   
-  .badge-upcoming {
-    @apply bg-football-status-upcoming/20 text-football-status-upcoming border border-football-status-upcoming/30 px-2 py-0.5 rounded-full text-xs font-medium;
+  .status-upcoming {
+    @apply bg-blue-600/20 text-blue-500 px-1.5 py-0.5 rounded text-xs font-medium;
+  }
+  
+  /* League section styles */
+  .league-header {
+    @apply bg-gray-900 hover:bg-gray-800 transition-colors;
+  }
+  
+  /* Match card styles */
+  .match-card {
+    @apply border-b border-gray-800 hover:bg-gray-800/30 transition-colors;
+  }
+  
+  .match-card-live {
+    @apply border-l-2 border-l-red-500;
   }
 }

@@ -32,63 +32,75 @@ export const MatchCard = ({ match, className }: MatchCardProps) => {
     <Link
       to={`/match/${fixture.id}`}
       className={cn(
-        "glass-card p-3 flex items-center gap-2 hover:scale-[1.01] transition-all",
-        isLive ? "border-l-2 border-l-football-status-live" : "",
+        "flex items-center hover:bg-white/5 border-b border-gray-800 transition-colors py-2",
+        isLive ? "border-l-2 border-l-red-500" : "",
         className
       )}
     >
-      <div className="flex flex-1 items-center gap-3">
-        <div className="flex flex-col items-center justify-center w-10">
-          <img
-            src={teams.home.logo}
-            alt={teams.home.name}
-            className="h-8 w-8 object-contain"
-            loading="lazy"
-          />
-        </div>
-        <div className="flex-1 text-left truncate">
-          <span className={cn(
-            "font-medium", 
-            teams.home.winner ? "text-football-blue" : ""
-          )}>
-            {teams.home.name}
-          </span>
-        </div>
-      </div>
-      
-      <div className="min-w-[80px] flex flex-col items-center justify-center gap-1">
+      {/* Star/favorite icon could go here */}
+      <div className="w-12 text-center text-xs text-gray-400">
         {statusType === "UPCOMING" ? (
-          <div className="text-sm font-medium">{matchTime}</div>
+          matchTime
         ) : (
-          <div className="flex items-center justify-center gap-2 font-bold">
-            <span>{goals.home ?? 0}</span>
-            <span>-</span>
-            <span>{goals.away ?? 0}</span>
-          </div>
+          <MatchStatusBadge 
+            status={statusType}
+            elapsed={fixture.status.elapsed}
+          />
         )}
-        
-        <MatchStatusBadge 
-          status={statusType}
-          elapsed={fixture.status.elapsed}
-        />
       </div>
       
-      <div className="flex flex-1 items-center gap-3 justify-end">
-        <div className="flex-1 text-right truncate">
-          <span className={cn(
-            "font-medium", 
-            teams.away.winner ? "text-football-blue" : ""
-          )}>
-            {teams.away.name}
-          </span>
+      <div className="flex flex-1 items-center">
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <img
+              src={teams.home.logo}
+              alt={teams.home.name}
+              className="h-4 w-4 object-contain"
+              loading="lazy"
+            />
+            <span className={cn(
+              "text-sm", 
+              teams.home.winner ? "font-bold text-white" : "text-gray-300"
+            )}>
+              {teams.home.name}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 mt-1">
+            <img
+              src={teams.away.logo}
+              alt={teams.away.name}
+              className="h-4 w-4 object-contain"
+              loading="lazy"
+            />
+            <span className={cn(
+              "text-sm", 
+              teams.away.winner ? "font-bold text-white" : "text-gray-300"
+            )}>
+              {teams.away.name}
+            </span>
+          </div>
         </div>
-        <div className="flex flex-col items-center justify-center w-10">
-          <img
-            src={teams.away.logo}
-            alt={teams.away.name}
-            className="h-8 w-8 object-contain"
-            loading="lazy"
-          />
+        
+        <div className="w-8 text-center font-bold">
+          {statusType !== "UPCOMING" && (
+            <>
+              <div className="text-sm">{goals.home}</div>
+              <div className="text-sm">{goals.away}</div>
+            </>
+          )}
+        </div>
+        
+        <div className="w-12 flex justify-center">
+          <div className="flex flex-col items-center gap-1">
+            {/* Match actions - could be stats, details buttons */}
+            <button className="text-gray-400 hover:text-white">
+              <span className="sr-only">Match details</span>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect width="18" height="18" x="3" y="3" rx="2" />
+                <path d="M7 7h.01M12 7h.01M17 7h.01M7 12h.01M12 12h.01M17 12h.01M7 17h.01M12 17h.01M17 17h.01" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </Link>

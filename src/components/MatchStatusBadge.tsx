@@ -9,11 +9,16 @@ interface BadgeProps {
 }
 
 export const MatchStatusBadge = ({ status, elapsed, className }: BadgeProps) => {
-  const badgeClass = cn({
-    "badge-live": status === "LIVE",
-    "badge-finished": status === "FT",
-    "badge-upcoming": status === "UPCOMING" || status === "HT",
-  }, className);
+  // Determine badge style based on status
+  const badgeClass = cn(
+    "text-xs font-medium px-1.5 rounded text-center min-w-[32px] inline-block",
+    {
+      "bg-red-600/20 text-red-500": status === "LIVE",
+      "bg-gray-600/20 text-gray-500": status === "FT",
+      "bg-blue-600/20 text-blue-500": status === "UPCOMING" || status === "HT",
+    },
+    className
+  );
 
   // Display status text, show elapsed minutes for LIVE matches
   const displayText = status === "LIVE" && elapsed ? `${elapsed}'` : status;

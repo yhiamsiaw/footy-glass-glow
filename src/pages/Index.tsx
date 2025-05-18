@@ -1,18 +1,19 @@
 
 import { useState, useEffect } from "react";
-import { Sidebar } from "@/components/Sidebar";
-import { SearchBar } from "@/components/SearchBar";
-import { LeagueSection } from "@/components/LeagueSection";
+import { Link } from "react-router-dom";
 import { Match, League } from "@/types/football";
+import { LeagueSection } from "@/components/LeagueSection";
+import { SearchBar } from "@/components/SearchBar";
 import { FixtureStatus, getLiveMatches, getTopLeagues, getTodayDate, getFixturesByDate, getMatchStatusType } from "@/utils/api";
 import { useToast } from "@/hooks/use-toast";
+import { Home, Info, Mail } from "lucide-react";
 
 const Index = () => {
   const [matches, setMatches] = useState<Match[]>([]);
   const [leagues, setLeagues] = useState<League[]>([]);
   const [topLeagues, setTopLeagues] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"live" | "today" | "finished">("live");
+  const [activeTab, setActiveTab] = useState<"all" | "live" | "finished" | "scheduled">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<FixtureStatus | null>(null);
 
@@ -41,7 +42,7 @@ const Index = () => {
 
         if (activeTab === "live") {
           matchesData = await getLiveMatches();
-        } else if (activeTab === "today" || activeTab === "finished") {
+        } else if (activeTab === "all" || activeTab === "finished" || activeTab === "scheduled") {
           const todayDate = getTodayDate();
           matchesData = await getFixturesByDate(todayDate);
           
@@ -50,9 +51,9 @@ const Index = () => {
             matchesData = matchesData.filter((match) => 
               getMatchStatusType(match.fixture.status.short) === "FT"
             );
-          } else {
+          } else if (activeTab === "scheduled") {
             matchesData = matchesData.filter((match) => 
-              getMatchStatusType(match.fixture.status.short) !== "FT"
+              getMatchStatusType(match.fixture.status.short) === "UPCOMING"
             );
           }
         } else {
@@ -129,45 +130,112 @@ const Index = () => {
     setStatusFilter(status);
   };
 
+  const currentDate = new Date().toLocaleDateString('en-US', {
+    day: '2-digit',
+    month: '2-digit',
+    year: '2-digit'
+  });
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-football-dark to-football-darker">
-      <div className="flex">
-        <Sidebar leagues={topLeagues} loading={!topLeagues.length} />
+    <div className="min-h-screen bg-[#0c1218] text-white flex">
+      {/* Left Column - Navigation */}
+      <div className="w-60 bg-[#0a111a] border-r border-gray-800 min-h-screen fixed left-0 top-0">
+        {/* Logo header */}
+        <div className="p-4 border-b border-gray-800">
+          <h1 className="text-xl font-bold text-white">LIVESCORE</h1>
+        </div>
         
-        <div className="flex-1 pl-64 p-8">
-          <h1 className="text-3xl font-bold mb-6 text-football-orange">LiveScore Football</h1>
-          
-          <div className="flex items-center mb-6 glass p-2 rounded-lg">
-            <button 
-              className={`flex-1 py-2 px-3 rounded-md transition-colors ${activeTab === "live" ? "bg-football-blue text-white" : "hover:bg-white/10"}`}
-              onClick={() => setActiveTab("live")}
-            >
-              ⚽ Live Matches
-            </button>
-            <button 
-              className={`flex-1 py-2 px-3 rounded-md transition-colors ${activeTab === "today" ? "bg-football-blue text-white" : "hover:bg-white/10"}`}
-              onClick={() => setActiveTab("today")}
-            >
-              🗓️ Today's Fixtures
-            </button>
-            <button 
-              className={`flex-1 py-2 px-3 rounded-md transition-colors ${activeTab === "finished" ? "bg-football-blue text-white" : "hover:bg-white/10"}`}
-              onClick={() => setActiveTab("finished")}
-            >
-              🏁 Finished Matches
-            </button>
+        {/* Main navigation */}
+        <div className="p-4">
+          <nav className="space-y-1">
+            <Link to="/" className="flex items-center gap-2 p-2 bg-blue-900/30 rounded">
+              <Home size={16} />
+              <span>Home</span>
+            </Link>
+            <Link to="/about" className="flex items-center gap-2 p-2 hover:bg-gray-800 rounded">
+              <Info size={16} />
+              <span>About Us</span>
+            </Link>
+            <Link to="/contact" className="flex items-center gap-2 p-2 hover:bg-gray-800 rounded">
+              <Mail size={16} />
+              <span>Contact Us</span>
+            </Link>
+          </nav>
+        </div>
+        
+        {/* Pinned Leagues */}
+        <div className="mt-6">
+          <div className="px-4 py-2 text-xs text-gray-400 uppercase">Pinned Leagues</div>
+          <div className="space-y-1 px-4">
+            {topLeagues.length > 0 ? (
+              topLeagues.map((league) => (
+                <Link 
+                  key={league.id} 
+                  to={`/league/${league.id}`}
+                  className="flex items-center gap-2 p-2 hover:bg-gray-800 rounded"
+                >
+                  <img src={league.logo} alt={league.name} className="h-4 w-4" />
+                  <span className="text-sm">{league.name}</span>
+                </Link>
+              ))
+            ) : (
+              <div className="py-2 px-4 text-sm text-gray-400">Loading leagues...</div>
+            )}
+          </div>
+        </div>
+      </div>
+      
+      {/* Middle Column - Content */}
+      <div className="flex-1 ml-60 mr-60">
+        {/* Top bar */}
+        <div className="sticky top-0 bg-[#0c1218] border-b border-gray-800 z-10">
+          <div className="flex items-center px-4 py-3">
+            <SearchBar onSearch={handleSearch} onStatusFilter={handleStatusFilter} />
           </div>
           
-          <SearchBar onSearch={handleSearch} onStatusFilter={handleStatusFilter} />
-          
+          {/* Tab navigation */}
+          <div className="flex border-b border-gray-800">
+            <button 
+              className={`px-4 py-2 text-xs font-medium ${activeTab === 'all' ? 'text-white border-b-2 border-blue-500' : 'text-gray-400'}`}
+              onClick={() => setActiveTab("all")}
+            >
+              ALL
+            </button>
+            <button 
+              className={`px-4 py-2 text-xs font-medium ${activeTab === 'live' ? 'text-white border-b-2 border-blue-500' : 'text-gray-400'}`}
+              onClick={() => setActiveTab("live")}
+            >
+              LIVE
+            </button>
+            <button 
+              className={`px-4 py-2 text-xs font-medium ${activeTab === 'finished' ? 'text-white border-b-2 border-blue-500' : 'text-gray-400'}`}
+              onClick={() => setActiveTab("finished")}
+            >
+              FINISHED
+            </button>
+            <button 
+              className={`px-4 py-2 text-xs font-medium ${activeTab === 'scheduled' ? 'text-white border-b-2 border-blue-500' : 'text-gray-400'}`}
+              onClick={() => setActiveTab("scheduled")}
+            >
+              SCHEDULED
+            </button>
+            
+            <div className="ml-auto px-4 py-2 flex items-center">
+              <span className="text-xs text-gray-400">{currentDate}</span>
+            </div>
+          </div>
+        </div>
+        
+        {/* Match content */}
+        <div className="py-2">
           {loading ? (
-            <div className="space-y-6">
+            <div className="space-y-4 p-4">
               {[...Array(3)].map((_, i) => (
                 <div key={i} className="animate-pulse">
-                  <div className="h-12 bg-white/5 rounded-lg mb-3"></div>
+                  <div className="h-8 bg-gray-800 rounded mb-2"></div>
                   <div className="space-y-2">
                     {[...Array(3)].map((_, j) => (
-                      <div key={j} className="h-16 bg-white/5 rounded-lg"></div>
+                      <div key={j} className="h-12 bg-gray-800 rounded"></div>
                     ))}
                   </div>
                 </div>
@@ -178,20 +246,35 @@ const Index = () => {
               <LeagueSection key={league.id} league={league} matches={matches} />
             ))
           ) : (
-            <div className="glass p-12 rounded-lg text-center animate-fade-in">
-              <h2 className="text-2xl font-bold mb-3">No matches found</h2>
-              <p className="text-muted-foreground">
+            <div className="p-8 text-center">
+              <h2 className="text-lg font-bold mb-2">No matches found</h2>
+              <p className="text-gray-400">
                 {activeTab === "live" ? "There are no live matches currently in progress." : 
-                 activeTab === "today" ? "There are no upcoming matches today." :
-                 "There are no finished matches for today."}
+                 activeTab === "scheduled" ? "There are no upcoming matches today." :
+                 activeTab === "finished" ? "There are no finished matches for today." :
+                 "There are no matches available."}
               </p>
               {searchQuery && (
-                <p className="mt-2 text-football-orange">
+                <p className="mt-2 text-blue-400">
                   No results found for "{searchQuery}"
                 </p>
               )}
             </div>
           )}
+        </div>
+      </div>
+      
+      {/* Right Column - Ads */}
+      <div className="w-60 bg-[#0a111a] border-l border-gray-800 min-h-screen fixed right-0 top-0">
+        <div className="p-4 text-center text-gray-400 text-sm">
+          Advertisement
+        </div>
+        {/* Ad placeholders */}
+        <div className="h-[300px] mx-4 mb-4 bg-gray-800 rounded flex items-center justify-center">
+          <span className="text-gray-500">Ad Space</span>
+        </div>
+        <div className="h-[300px] mx-4 mb-4 bg-gray-800 rounded flex items-center justify-center">
+          <span className="text-gray-500">Ad Space</span>
         </div>
       </div>
     </div>
