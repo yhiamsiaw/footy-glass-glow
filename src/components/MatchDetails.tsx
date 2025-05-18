@@ -5,6 +5,7 @@ import { MatchStatusBadge } from "@/components/MatchStatusBadge";
 import { getMatchStatusType } from "@/utils/api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, Clock, Home, Info, User } from "lucide-react";
+import { LogoFallback } from "@/components/LogoFallback";
 
 interface MatchDetailsProps {
   match: MatchDetailsType;
@@ -12,6 +13,8 @@ interface MatchDetailsProps {
 
 export const MatchDetails = ({ match }: MatchDetailsProps) => {
   const { fixture, teams, goals, score, events, lineups, statistics } = match;
+  const [homeLogoError, setHomeLogoError] = useState(false);
+  const [awayLogoError, setAwayLogoError] = useState(false);
   
   // Get match status
   const statusType = getMatchStatusType(
@@ -33,21 +36,21 @@ export const MatchDetails = ({ match }: MatchDetailsProps) => {
     minute: "2-digit",
   });
   
-  // Field positions for lineup visualization
-  const getPositionClass = (pos: string, isHome: boolean) => {
+  // Field positions for lineup visualization - HOME TEAM
+  const getHomePositionClass = (pos: string) => {
     const baseClass = "absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center";
     
     switch (pos) {
       // Goalkeeper
       case "G":
-        return `${baseClass} ${isHome ? "bottom-[5%] left-[50%]" : "top-[5%] left-[50%]"}`;
+        return `${baseClass} bottom-[5%] left-[50%]`;
       
       // Defenders
       case "D":
       case "RB":
       case "CB":
       case "LB":
-        return `${baseClass} ${isHome ? "bottom-[20%] left-[50%]" : "top-[20%] left-[50%]"}`;
+        return `${baseClass} bottom-[25%] left-[${getHorizontalPosition(pos)}%]`;
       
       // Midfielders
       case "M":
@@ -56,7 +59,7 @@ export const MatchDetails = ({ match }: MatchDetailsProps) => {
       case "LM":
       case "CDM":
       case "CAM":
-        return `${baseClass} ${isHome ? "bottom-[40%] left-[50%]" : "top-[40%] left-[50%]"}`;
+        return `${baseClass} bottom-[45%] left-[${getHorizontalPosition(pos)}%]`;
       
       // Forwards
       case "F":
@@ -64,10 +67,73 @@ export const MatchDetails = ({ match }: MatchDetailsProps) => {
       case "CF":
       case "RW":
       case "LW":
-        return `${baseClass} ${isHome ? "bottom-[65%] left-[50%]" : "top-[65%] left-[50%]"}`;
+        return `${baseClass} bottom-[65%] left-[${getHorizontalPosition(pos)}%]`;
       
       default:
-        return `${baseClass} ${isHome ? "bottom-[40%] left-[50%]" : "top-[40%] left-[50%]"}`;
+        return `${baseClass} bottom-[45%] left-[50%]`;
+    }
+  };
+  
+  // Field positions for lineup visualization - AWAY TEAM
+  const getAwayPositionClass = (pos: string) => {
+    const baseClass = "absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center";
+    
+    switch (pos) {
+      // Goalkeeper
+      case "G":
+        return `${baseClass} top-[5%] left-[50%]`;
+      
+      // Defenders
+      case "D":
+      case "RB":
+      case "CB":
+      case "LB":
+        return `${baseClass} top-[25%] left-[${getHorizontalPosition(pos)}%]`;
+      
+      // Midfielders
+      case "M":
+      case "CM":
+      case "RM":
+      case "LM":
+      case "CDM":
+      case "CAM":
+        return `${baseClass} top-[45%] left-[${getHorizontalPosition(pos)}%]`;
+      
+      // Forwards
+      case "F":
+      case "ST":
+      case "CF":
+      case "RW":
+      case "LW":
+        return `${baseClass} top-[65%] left-[${getHorizontalPosition(pos)}%]`;
+      
+      default:
+        return `${baseClass} top-[45%] left-[50%]`;
+    }
+  };
+
+  // Helper function to determine horizontal position based on player role
+  const getHorizontalPosition = (pos: string) => {
+    switch (pos) {
+      case "RB":
+      case "RM":
+      case "RW":
+        return 80;
+      case "CB":
+      case "CM":
+      case "CF":
+      case "ST":
+        return 50;
+      case "LB":
+      case "LM":
+      case "LW":
+        return 20;
+      case "CDM":
+        return 35;
+      case "CAM":
+        return 65;
+      default:
+        return 50;
     }
   };
 
@@ -233,23 +299,25 @@ export const MatchDetails = ({ match }: MatchDetailsProps) => {
             <div className="absolute bottom-0 left-0 w-full h-[100px] border-t-2 border-white/70"></div>
           </div>
           
+          {/* Home team section indicator */}
+          <div className="absolute bottom-0 left-0 w-full h-1/2 bg-blue-900/10 border-t-2 border-white/30"></div>
+          
+          {/* Away team section indicator */}
+          <div className="absolute top-0 left-0 w-full h-1/2 bg-red-900/10 border-b-2 border-white/30"></div>
+          
           {/* Home team players */}
           {homeLineup?.startXI.map((player, idx) => {
-            // Calculate position based on formation and player role
-            const posClass = getPositionClass(player.player.pos, true);
-            // Add horizontal spread based on player index to prevent overlap
-            const spreadX = ((idx % 4) - 1.5) * 20;
+            const posClass = getHomePositionClass(player.player.pos);
             
             return (
               <div 
                 key={`home-${idx}`} 
                 className={posClass}
-                style={{ marginLeft: `${spreadX}%` }}
               >
                 <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
                   <span className="text-xs font-bold">{player.player.number}</span>
                 </div>
-                <span className="text-xs font-medium mt-1 bg-black/50 px-1 py-0.5 rounded">
+                <span className="text-xs font-medium mt-1 bg-black/50 px-1 py-0.5 rounded max-w-20 truncate">
                   {player.player.name.split(' ').pop()}
                 </span>
               </div>
@@ -258,21 +326,17 @@ export const MatchDetails = ({ match }: MatchDetailsProps) => {
           
           {/* Away team players */}
           {awayLineup?.startXI.map((player, idx) => {
-            // Calculate position based on formation and player role
-            const posClass = getPositionClass(player.player.pos, false);
-            // Add horizontal spread based on player index to prevent overlap
-            const spreadX = ((idx % 4) - 1.5) * 20;
+            const posClass = getAwayPositionClass(player.player.pos);
             
             return (
               <div 
                 key={`away-${idx}`} 
                 className={posClass}
-                style={{ marginLeft: `${spreadX}%` }}
               >
                 <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center">
                   <span className="text-xs font-bold">{player.player.number}</span>
                 </div>
-                <span className="text-xs font-medium mt-1 bg-black/50 px-1 py-0.5 rounded">
+                <span className="text-xs font-medium mt-1 bg-black/50 px-1 py-0.5 rounded max-w-20 truncate">
                   {player.player.name.split(' ').pop()}
                 </span>
               </div>
@@ -283,8 +347,8 @@ export const MatchDetails = ({ match }: MatchDetailsProps) => {
         {/* Traditional lineup lists */}
         <div className="bg-gray-800/50 p-4 rounded-lg mb-6">
           <h4 className="text-center mb-3 font-medium">Starting XI</h4>
-          <div className="flex">
-            <div className="flex-1 border-r border-white/10 pr-4">
+          <div className="flex flex-col md:flex-row">
+            <div className="flex-1 border-b md:border-b-0 md:border-r border-white/10 pr-0 md:pr-4 pb-4 md:pb-0">
               {homeLineup?.startXI.map((player, idx) => (
                 <div key={idx} className="text-sm py-1.5 flex items-center gap-2">
                   <span className="w-6 text-center text-xs text-gray-400 font-medium">
@@ -295,7 +359,7 @@ export const MatchDetails = ({ match }: MatchDetailsProps) => {
                 </div>
               ))}
             </div>
-            <div className="flex-1 pl-4">
+            <div className="flex-1 pt-4 md:pt-0 md:pl-4">
               {awayLineup?.startXI.map((player, idx) => (
                 <div key={idx} className="text-sm py-1.5 flex items-center gap-2">
                   <span className="text-xs px-1.5 py-0.5 bg-gray-700 rounded text-gray-300">{player.player.pos}</span>
@@ -311,8 +375,8 @@ export const MatchDetails = ({ match }: MatchDetailsProps) => {
 
         <div className="bg-gray-800/50 p-4 rounded-lg">
           <h4 className="text-center mb-3 font-medium">Substitutes</h4>
-          <div className="flex">
-            <div className="flex-1 border-r border-white/10 pr-4">
+          <div className="flex flex-col md:flex-row">
+            <div className="flex-1 border-b md:border-b-0 md:border-r border-white/10 pr-0 md:pr-4 pb-4 md:pb-0">
               {homeLineup?.substitutes.map((player, idx) => (
                 <div key={idx} className="text-sm py-1.5 flex items-center gap-2">
                   <span className="w-6 text-center text-xs text-gray-400 font-medium">
@@ -323,7 +387,7 @@ export const MatchDetails = ({ match }: MatchDetailsProps) => {
                 </div>
               ))}
             </div>
-            <div className="flex-1 pl-4">
+            <div className="flex-1 pt-4 md:pt-0 md:pl-4">
               {awayLineup?.substitutes.map((player, idx) => (
                 <div key={idx} className="text-sm py-1.5 flex items-center gap-2">
                   <span className="text-xs px-1.5 py-0.5 bg-gray-700 rounded text-gray-300">{player.player.pos}</span>
@@ -348,7 +412,7 @@ export const MatchDetails = ({ match }: MatchDetailsProps) => {
 
   return (
     <div className="rounded-lg overflow-hidden bg-gray-900/50 shadow-xl animate-fade-in">
-      <div className="p-6 border-b border-white/10">
+      <div className="p-4 md:p-6 border-b border-white/10">
         <div className="flex justify-between items-center mb-4">
           <Link 
             to={`/league/${match.league.id}`}
@@ -358,6 +422,7 @@ export const MatchDetails = ({ match }: MatchDetailsProps) => {
               src={match.league.logo}
               alt={match.league.name}
               className="h-6 w-6 object-contain"
+              onError={(e) => (e.currentTarget.style.display = 'none')}
             />
             <div className="flex flex-col">
               <span className="text-sm font-medium">{match.league.name}</span>
@@ -372,18 +437,23 @@ export const MatchDetails = ({ match }: MatchDetailsProps) => {
           />
         </div>
         
-        <div className="flex justify-between items-center mb-8">
-          <div className="flex flex-col items-center text-center w-1/3">
-            <img
-              src={teams.home.logo}
-              alt={teams.home.name}
-              className="h-20 w-20 object-contain mb-3"
-            />
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-8 gap-4">
+          <div className="flex flex-col items-center text-center md:w-1/3">
+            {homeLogoError ? (
+              <LogoFallback className="h-20 w-20 mb-3" teamName={teams.home.name} />
+            ) : (
+              <img
+                src={teams.home.logo}
+                alt={teams.home.name}
+                className="h-20 w-20 object-contain mb-3"
+                onError={() => setHomeLogoError(true)}
+              />
+            )}
             <h3 className="font-bold text-xl">{teams.home.name}</h3>
           </div>
           
-          <div className="flex flex-col items-center justify-center w-1/3">
-            <div className="text-5xl font-bold mb-2 flex items-center gap-3">
+          <div className="flex flex-col items-center justify-center md:w-1/3">
+            <div className="text-4xl md:text-5xl font-bold mb-2 flex items-center gap-3">
               <span className={teams.home.winner ? "text-white" : "text-gray-300"}>{goals.home ?? 0}</span>
               <span className="text-muted-foreground">-</span>
               <span className={teams.away.winner ? "text-white" : "text-gray-300"}>{goals.away ?? 0}</span>
@@ -399,17 +469,22 @@ export const MatchDetails = ({ match }: MatchDetailsProps) => {
             </div>
           </div>
           
-          <div className="flex flex-col items-center text-center w-1/3">
-            <img
-              src={teams.away.logo}
-              alt={teams.away.name}
-              className="h-20 w-20 object-contain mb-3"
-            />
+          <div className="flex flex-col items-center text-center md:w-1/3">
+            {awayLogoError ? (
+              <LogoFallback className="h-20 w-20 mb-3" teamName={teams.away.name} />
+            ) : (
+              <img
+                src={teams.away.logo}
+                alt={teams.away.name}
+                className="h-20 w-20 object-contain mb-3"
+                onError={() => setAwayLogoError(true)}
+              />
+            )}
             <h3 className="font-bold text-xl">{teams.away.name}</h3>
           </div>
         </div>
         
-        <div className="flex items-center justify-center gap-6 text-xs text-gray-400">
+        <div className="flex flex-wrap items-center justify-center gap-3 md:gap-6 text-xs text-gray-400">
           <div className="flex items-center gap-1">
             <Calendar className="h-3 w-3" />
             <span>{matchDate}</span>

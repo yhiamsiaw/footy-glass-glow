@@ -1,9 +1,10 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Home, Info, Mail } from "lucide-react";
 import { TopLeague } from "@/types/football";
 import { cn } from "@/lib/utils";
+import { LogoFallback } from "@/components/LogoFallback";
 
 interface SidebarProps {
   leagues: TopLeague[];
@@ -29,16 +30,13 @@ export const Sidebar = ({ leagues, loading }: SidebarProps) => {
   };
 
   return (
-    <div className={cn(
-      "bg-[#0a111a] border-r border-gray-800 h-screen fixed left-0 top-0 z-40 flex flex-col transition-all duration-300",
-      collapsed ? "w-16" : "w-60"
-    )}>
+    <div className="h-full flex flex-col">
       <div className="flex items-center justify-between p-4 border-b border-gray-800">
         {!collapsed && (
-          <Link to="/" className="text-xl font-bold">
-            <span className="text-blue-500">LIVE</span>
-            <span className="text-white">SCORE</span>
-          </Link>
+          <div className="text-lg font-bold">
+            <span className="text-gray-300">Top</span>
+            <span className="text-blue-500"> Leagues</span>
+          </div>
         )}
         <button
           onClick={toggleSidebar}
@@ -73,12 +71,11 @@ export const Sidebar = ({ leagues, loading }: SidebarProps) => {
       </div>
 
       <div className="mt-6 border-t border-gray-800 pt-4 flex-1 overflow-y-auto">
-        <h2 className={cn(
-          "text-xs uppercase font-medium text-gray-400 mb-2",
-          collapsed ? "text-center" : "px-4"
-        )}>
-          {!collapsed && "Top Leagues"}
-        </h2>
+        {!collapsed && (
+          <h2 className="text-xs uppercase font-medium text-gray-400 mb-2 px-4">
+            Top Leagues
+          </h2>
+        )}
 
         <div className="flex flex-col gap-1 p-2">
           {loading ? (
@@ -88,35 +85,43 @@ export const Sidebar = ({ leagues, loading }: SidebarProps) => {
               ))}
             </div>
           ) : (
-            leagues.map((league) => (
-              <Link
-                key={league.id}
-                to={`/league/${league.id}`}
-                className={cn(
-                  "flex items-center gap-3 p-3 rounded-lg transition-all",
-                  location.pathname.includes(`/league/${league.id}`) 
-                    ? "bg-blue-600/20 text-blue-400" 
-                    : "hover:bg-white/10 text-gray-300 hover:text-white",
-                  collapsed ? "justify-center" : ""
-                )}
-              >
-                <img
-                  src={league.logo}
-                  alt={league.name}
-                  className="h-6 w-6 object-contain"
-                />
-                {!collapsed && (
-                  <div className="overflow-hidden">
-                    <p className="text-sm whitespace-nowrap overflow-hidden text-ellipsis">
-                      {league.name}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {league.country}
-                    </p>
-                  </div>
-                )}
-              </Link>
-            ))
+            leagues.map((league) => {
+              const [logoError, setLogoError] = useState(false);
+              return (
+                <Link
+                  key={league.id}
+                  to={`/league/${league.id}`}
+                  className={cn(
+                    "flex items-center gap-3 p-3 rounded-lg transition-all",
+                    location.pathname.includes(`/league/${league.id}`) 
+                      ? "bg-blue-600/20 text-blue-400" 
+                      : "hover:bg-white/10 text-gray-300 hover:text-white",
+                    collapsed ? "justify-center" : ""
+                  )}
+                >
+                  {logoError ? (
+                    <LogoFallback className="h-6 w-6" teamName={league.name} />
+                  ) : (
+                    <img
+                      src={league.logo}
+                      alt={league.name}
+                      className="h-6 w-6 object-contain"
+                      onError={() => setLogoError(true)}
+                    />
+                  )}
+                  {!collapsed && (
+                    <div className="overflow-hidden">
+                      <p className="text-sm whitespace-nowrap overflow-hidden text-ellipsis">
+                        {league.name}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {league.country}
+                      </p>
+                    </div>
+                  )}
+                </Link>
+              );
+            })
           )}
         </div>
       </div>

@@ -1,7 +1,7 @@
+
 #root {
-  max-width: 1280px;
+  max-width: 100%;
   margin: 0 auto;
-  padding: 2rem;
   text-align: center;
 }
 
@@ -39,4 +39,19 @@
 
 .read-the-docs {
   color: #888;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Ensure main content doesn't stretch too wide on large displays */
+@media (min-width: 1280px) {
+  .max-w-6xl {
+    max-width: 1152px;
+  }
 }
