@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Match, League, TopLeague, FixtureStatus } from "@/types/football";
 import { LeagueSection } from "@/components/LeagueSection";
-import { MainHeader } from "@/components/MainHeader";
+import { SearchBar } from "@/components/SearchBar";
 import { Sidebar } from "@/components/Sidebar";
 import { getLiveMatches, getTopLeagues, getTodayDate, getFixturesByDate, getMatchStatusType } from "@/utils/api";
 import { useToast } from "@/hooks/use-toast";
@@ -21,7 +21,7 @@ const Index = () => {
   const { toast } = useToast();
 
   // Priority leagues IDs (top leagues - should match the IDs from getTopLeagues)
-  const priorityLeagueIds = [39, 140, 78, 135, 61, 2];
+  const priorityLeagueIds = [39, 140, 78, 135, 61, 2]; // Premier League, La Liga, Bundesliga, Serie A, Ligue 1, Champions League
 
   // Fetch top leagues
   useEffect(() => {
@@ -180,9 +180,9 @@ const Index = () => {
       <Sidebar leagues={topLeagues} loading={topLeagues.length === 0} />
       
       {/* Middle Column - Content */}
-      <div className="flex-1 ml-60 mr-60">
-        {/* Top header with search and filters */}
-        <MainHeader onSearch={handleSearch} onStatusFilter={handleStatusFilter} />
+      <div className="flex-1 max-w-4xl mx-auto">
+        {/* Search and filters */}
+        <SearchBar onSearch={handleSearch} onStatusFilter={handleStatusFilter} />
         
         {/* Tab navigation */}
         <div className="sticky top-0 z-10 bg-[#0c1218] border-b border-gray-800">

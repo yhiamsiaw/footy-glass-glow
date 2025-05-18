@@ -2,8 +2,10 @@
 import { Link } from "react-router-dom";
 import { Match } from "@/types/football";
 import { MatchStatusBadge } from "@/components/MatchStatusBadge";
+import { LogoFallback } from "@/components/LogoFallback";
 import { getMatchStatusType } from "@/utils/api";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 interface MatchCardProps {
   match: Match;
@@ -12,6 +14,8 @@ interface MatchCardProps {
 
 export const MatchCard = ({ match, className }: MatchCardProps) => {
   const { fixture, teams, goals, league } = match;
+  const [homeLogoError, setHomeLogoError] = useState(false);
+  const [awayLogoError, setAwayLogoError] = useState(false);
   
   // Get match status
   const statusType = getMatchStatusType(
@@ -51,12 +55,17 @@ export const MatchCard = ({ match, className }: MatchCardProps) => {
       <div className="flex flex-1 items-center px-3">
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-2.5">
-            <img
-              src={teams.home.logo}
-              alt={teams.home.name}
-              className="h-5 w-5 object-contain"
-              loading="lazy"
-            />
+            {homeLogoError ? (
+              <LogoFallback className="h-5 w-5" />
+            ) : (
+              <img
+                src={teams.home.logo}
+                alt=""
+                className="h-5 w-5 object-contain"
+                loading="lazy"
+                onError={() => setHomeLogoError(true)}
+              />
+            )}
             <span className={cn(
               "text-sm", 
               teams.home.winner ? "font-bold text-white" : "text-gray-300"
@@ -65,12 +74,17 @@ export const MatchCard = ({ match, className }: MatchCardProps) => {
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <img
-              src={teams.away.logo}
-              alt={teams.away.name}
-              className="h-5 w-5 object-contain"
-              loading="lazy"
-            />
+            {awayLogoError ? (
+              <LogoFallback className="h-5 w-5" />
+            ) : (
+              <img
+                src={teams.away.logo}
+                alt=""
+                className="h-5 w-5 object-contain"
+                loading="lazy"
+                onError={() => setAwayLogoError(true)}
+              />
+            )}
             <span className={cn(
               "text-sm", 
               teams.away.winner ? "font-bold text-white" : "text-gray-300"

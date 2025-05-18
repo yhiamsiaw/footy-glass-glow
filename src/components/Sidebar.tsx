@@ -34,12 +34,6 @@ export const Sidebar = ({ leagues, loading }: SidebarProps) => {
       collapsed ? "w-16" : "w-60"
     )}>
       <div className="flex items-center justify-between p-4 border-b border-gray-800">
-        {!collapsed && (
-          <Link to="/" className="text-xl font-bold">
-            <span className="text-blue-500">LIVE</span>
-            <span className="text-white">SCORE</span>
-          </Link>
-        )}
         <button
           onClick={toggleSidebar}
           className="p-2 rounded-full hover:bg-white/10 transition-colors ml-auto"
@@ -102,8 +96,11 @@ export const Sidebar = ({ leagues, loading }: SidebarProps) => {
               >
                 <img
                   src={league.logo}
-                  alt={league.name}
+                  alt=""
                   className="h-6 w-6 object-contain"
+                  onError={(e) => {
+                    e.currentTarget.src = "/placeholder.svg";
+                  }}
                 />
                 {!collapsed && (
                   <div className="overflow-hidden">
