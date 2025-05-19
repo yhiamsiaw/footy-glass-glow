@@ -9,6 +9,8 @@ import MatchDetailsPage from "./pages/MatchDetailsPage";
 import LeaguePage from "./pages/LeaguePage";
 import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
+import SearchPage from "./pages/SearchPage";
+import FavoritesPage from "./pages/FavoritesPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +28,8 @@ const App = () => (
           <Route path="/league/:id/:section" element={<LeaguePage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />
+          <Route path="/search" element={<SearchPage />} />
+          <Route path="/favorites" element={<FavoritesPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

@@ -1,12 +1,17 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Match, League, TopLeague, FixtureStatus } from "@/types/football";
 import { LeagueSection } from "@/components/LeagueSection";
 import { MainHeader } from "@/components/MainHeader";
+import { MobileHeader } from "@/components/MobileHeader";
+import { SportsTabs } from "@/components/SportsTabs";
+import { DateNavigation } from "@/components/DateNavigation";
+import { MobileNavigation } from "@/components/MobileNavigation";
 import { Sidebar } from "@/components/Sidebar";
+import { MatchCard } from "@/components/MatchCard";
 import { getLiveMatches, getTopLeagues, getTodayDate, getFixturesByDate, getMatchStatusType } from "@/utils/api";
 import { useToast } from "@/hooks/use-toast";
-import { ApiCache } from "@/utils/apiCache";
 import { Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
@@ -19,6 +24,7 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<FixtureStatus | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(getTodayDate());
 
   const { toast } = useToast();
 
@@ -37,24 +43,14 @@ const Index = () => {
   }, []);
 
   // Priority leagues IDs (top leagues - should match the IDs from getTopLeagues)
-  const priorityLeagueIds = [39, 140, 78, 135, 61, 2];
+  const priorityLeagueIds = [39, 140, 78, 135, 61, 2, 3, 848];
 
   // Fetch top leagues
   useEffect(() => {
     const fetchTopLeagues = async () => {
       try {
-        // Check cache first
-        const cachedLeagues = ApiCache.get('topLeagues');
-        if (cachedLeagues) {
-          setTopLeagues(cachedLeagues as TopLeague[]);
-          return;
-        }
-
         const leagues = await getTopLeagues();
         setTopLeagues(leagues);
-        
-        // Cache the result
-        ApiCache.set('topLeagues', leagues, 24 * 60 * 60 * 1000); // Cache for 24 hours
       } catch (error) {
         console.error("Error fetching top leagues:", error);
       }
@@ -63,45 +59,27 @@ const Index = () => {
     fetchTopLeagues();
   }, []);
 
-  // Fetch matches based on active tab
+  // Fetch matches based on active tab and date
   useEffect(() => {
     const fetchMatches = async () => {
       setLoading(true);
       try {
         let matchesData: Match[] = [];
-        let cacheKey = '';
 
         if (activeTab === "live") {
-          cacheKey = 'liveMatches';
-          const cachedMatches = ApiCache.get(cacheKey);
-          
-          if (cachedMatches && Date.now() - ApiCache.getTimestamp(cacheKey) < 60000) { // 1 minute cache for live
-            matchesData = cachedMatches as Match[];
-          } else {
-            matchesData = await getLiveMatches();
-            ApiCache.set(cacheKey, matchesData, 60000); // Cache for 1 minute
-          }
+          matchesData = await getLiveMatches();
         } else {
-          const todayDate = getTodayDate();
-          cacheKey = `fixtures_${todayDate}_${activeTab}`;
-          const cachedMatches = ApiCache.get(cacheKey);
-          
-          if (cachedMatches && Date.now() - ApiCache.getTimestamp(cacheKey) < 300000) { // 5 minutes cache
-            matchesData = cachedMatches as Match[];
-          } else {
-            matchesData = await getFixturesByDate(todayDate);
-            ApiCache.set(cacheKey, matchesData, 300000); // Cache for 5 minutes
+          matchesData = await getFixturesByDate(selectedDate);
             
-            // Filter based on the active tab
-            if (activeTab === "finished") {
-              matchesData = matchesData.filter((match) => 
-                getMatchStatusType(match.fixture.status.short) === "FT"
-              );
-            } else if (activeTab === "scheduled") {
-              matchesData = matchesData.filter((match) => 
-                getMatchStatusType(match.fixture.status.short) === "UPCOMING"
-              );
-            }
+          // Filter based on the active tab
+          if (activeTab === "finished") {
+            matchesData = matchesData.filter((match) => 
+              getMatchStatusType(match.fixture.status.short) === "FT"
+            );
+          } else if (activeTab === "scheduled") {
+            matchesData = matchesData.filter((match) => 
+              getMatchStatusType(match.fixture.status.short) === "UPCOMING"
+            );
           }
         }
 
@@ -157,7 +135,7 @@ const Index = () => {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [activeTab, searchQuery, statusFilter, toast]);
+  }, [activeTab, searchQuery, statusFilter, selectedDate, toast]);
 
   // Group matches by league
   const matchesByLeague = leagues.map(league => {
@@ -184,79 +162,25 @@ const Index = () => {
     setStatusFilter(status);
   };
 
-  const currentDate = new Date().toLocaleDateString('en-US', {
-    day: '2-digit',
-    month: '2-digit',
-    year: '2-digit'
-  });
+  const handleDateChange = (date: string) => {
+    setSelectedDate(date);
+    setActiveTab("all"); // Reset active tab when changing date
+  };
 
-  return (
-    <div className="min-h-screen bg-[#0c1218] text-white">
-      {/* Header for all sizes */}
+  const renderDesktopLayout = () => (
+    <>
       <MainHeader onSearch={handleSearch} onStatusFilter={handleStatusFilter} />
       
       <div className="flex flex-col md:flex-row max-w-6xl mx-auto">
-        {/* Left Column - Navigation (hidden on mobile) */}
-        {!isMobile && (
-          <div className="hidden md:block md:w-60 bg-[#0a111a] border-r border-gray-800 min-h-screen">
-            <Sidebar leagues={topLeagues} loading={topLeagues.length === 0} />
-          </div>
-        )}
-
-        {/* Mobile Navigation */}
-        <div className="md:hidden sticky top-0 z-20 bg-[#0a111a] border-b border-gray-800">
-          <div className="flex justify-between items-center p-2">
-            <Sheet>
-              <SheetTrigger asChild>
-                <button className="p-2 rounded-md bg-gray-800 hover:bg-gray-700">
-                  <Menu className="h-6 w-6" />
-                </button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-[250px] bg-[#0a111a] border-r border-gray-800 p-0">
-                <div className="h-full overflow-auto">
-                  <Sidebar leagues={topLeagues} loading={topLeagues.length === 0} />
-                </div>
-              </SheetContent>
-            </Sheet>
-
-            <div className="flex items-center px-2">
-              <span className="text-xs text-gray-400">{currentDate}</span>
-            </div>
-          </div>
-          
-          {/* Tab navigation for mobile */}
-          <div className="flex border-b border-gray-800 overflow-x-auto">
-            <button 
-              className={`px-4 py-2.5 text-xs font-medium whitespace-nowrap ${activeTab === 'all' ? 'text-white border-b-2 border-blue-500' : 'text-gray-400'}`}
-              onClick={() => setActiveTab("all")}
-            >
-              ALL
-            </button>
-            <button 
-              className={`px-4 py-2.5 text-xs font-medium whitespace-nowrap ${activeTab === 'live' ? 'text-white border-b-2 border-blue-500' : 'text-gray-400'}`}
-              onClick={() => setActiveTab("live")}
-            >
-              LIVE
-            </button>
-            <button 
-              className={`px-4 py-2.5 text-xs font-medium whitespace-nowrap ${activeTab === 'finished' ? 'text-white border-b-2 border-blue-500' : 'text-gray-400'}`}
-              onClick={() => setActiveTab("finished")}
-            >
-              FINISHED
-            </button>
-            <button 
-              className={`px-4 py-2.5 text-xs font-medium whitespace-nowrap ${activeTab === 'scheduled' ? 'text-white border-b-2 border-blue-500' : 'text-gray-400'}`}
-              onClick={() => setActiveTab("scheduled")}
-            >
-              SCHEDULED
-            </button>
-          </div>
+        {/* Left Column - Navigation */}
+        <div className="md:w-60 bg-[#0a111a] border-r border-gray-800 min-h-screen">
+          <Sidebar leagues={topLeagues} loading={topLeagues.length === 0} />
         </div>
-        
+
         {/* Middle Column - Content */}
         <div className="flex-1">
           {/* Tab navigation for desktop */}
-          <div className="hidden md:block sticky top-0 z-10 bg-[#0c1218] border-b border-gray-800">
+          <div className="sticky top-0 z-10 bg-[#0c1218] border-b border-gray-800">
             <div className="flex border-b border-gray-800">
               <button 
                 className={`px-4 py-2.5 text-xs font-medium ${activeTab === 'all' ? 'text-white border-b-2 border-blue-500' : 'text-gray-400'}`}
@@ -284,7 +208,13 @@ const Index = () => {
               </button>
               
               <div className="ml-auto px-4 py-2 flex items-center">
-                <span className="text-xs text-gray-400">{currentDate}</span>
+                <span className="text-xs text-gray-400">
+                  {new Date(selectedDate).toLocaleDateString('en-US', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: '2-digit'
+                  })}
+                </span>
               </div>
             </div>
           </div>
@@ -332,8 +262,8 @@ const Index = () => {
           </div>
         </div>
         
-        {/* Right Column - Ads (hidden on mobile) */}
-        <div className="hidden md:block md:w-60 bg-[#0a111a] border-l border-gray-800">
+        {/* Right Column - Ads */}
+        <div className="md:w-60 bg-[#0a111a] border-l border-gray-800">
           <div className="p-4 text-center text-gray-400 text-sm">
             Advertisement
           </div>
@@ -346,8 +276,108 @@ const Index = () => {
           </div>
         </div>
       </div>
+    </>
+  );
+
+  const renderMobileLayout = () => (
+    <div className="livescore-mobile min-h-screen pb-16">
+      <MobileHeader onSearch={handleSearch} />
+      <SportsTabs />
+      <DateNavigation onDateChange={handleDateChange} />
+      
+      {/* Mobile tabs */}
+      <div className="flex border-b border-gray-700 bg-[#121212]">
+        <button 
+          className={`flex-1 px-2 py-3 text-xs font-medium ${activeTab === 'all' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+          onClick={() => setActiveTab("all")}
+        >
+          ALL
+        </button>
+        <button 
+          className={`flex-1 px-2 py-3 text-xs font-medium ${activeTab === 'live' ? 'text-red-400 border-b-2 border-red-400' : 'text-gray-400'}`}
+          onClick={() => setActiveTab("live")}
+        >
+          LIVE
+        </button>
+        <button 
+          className={`flex-1 px-2 py-3 text-xs font-medium ${activeTab === 'finished' ? 'text-gray-200 border-b-2 border-gray-200' : 'text-gray-400'}`}
+          onClick={() => setActiveTab("finished")}
+        >
+          FINISHED
+        </button>
+        <button 
+          className={`flex-1 px-2 py-3 text-xs font-medium ${activeTab === 'scheduled' ? 'text-green-400 border-b-2 border-green-400' : 'text-gray-400'}`}
+          onClick={() => setActiveTab("scheduled")}
+        >
+          UPCOMING
+        </button>
+      </div>
+      
+      <div className="mobile-content-area">
+        {loading ? (
+          <div className="space-y-4 p-4">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="h-10 bg-[#1a1a1a] rounded-md mb-1"></div>
+                <div className="space-y-1">
+                  {[...Array(2)].map((_, j) => (
+                    <div key={j} className="h-16 bg-[#1a1a1a] rounded-md"></div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : matches.length > 0 ? (
+          <div>
+            {sortedMatchesByLeague.map(({ league, matches }) => (
+              <div key={league.id} className="mb-4">
+                <div className="league-header">
+                  <div className="flex items-center">
+                    <img 
+                      src={league.logo} 
+                      alt={league.name}
+                      className="w-6 h-6 mr-2 object-contain"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = '';
+                      }} 
+                    />
+                    <div>
+                      <div className="text-sm font-semibold">{league.name}</div>
+                      <div className="text-xs text-gray-400">{league.country}</div>
+                    </div>
+                  </div>
+                </div>
+                
+                {matches.map((match) => (
+                  <MatchCard key={match.fixture.id} match={match} isMobile={true} />
+                ))}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="p-8 text-center">
+            <h2 className="text-lg font-bold mb-2">No matches found</h2>
+            <p className="text-gray-400">
+              {activeTab === "live" ? "There are no live matches currently in progress." : 
+               activeTab === "scheduled" ? "There are no upcoming matches for this date." :
+               activeTab === "finished" ? "There are no finished matches for this date." :
+               "There are no matches available for this date."}
+            </p>
+            {searchQuery && (
+              <p className="mt-2 text-blue-400">
+                No results found for "{searchQuery}"
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+      
+      <MobileNavigation />
     </div>
   );
+
+  return isMobile ? renderMobileLayout() : renderDesktopLayout();
 };
 
 export default Index;

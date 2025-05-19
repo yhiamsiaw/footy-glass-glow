@@ -41,17 +41,103 @@
   color: #888;
 }
 
+/* LiveScore Mobile Design Styles */
+.livescore-mobile {
+  background-color: #121212;
+  color: #ffffff;
+}
+
+.livescore-header {
+  background-color: #121212;
+  border-bottom: 1px solid #222;
+  padding: 12px 16px;
+}
+
+.sports-tabs {
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 8px 12px;
+  background-color: #121212;
+  border-bottom: 1px solid #222;
+}
+
+.sports-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.sports-tab {
+  padding: 8px 16px;
+  border-radius: 24px;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  margin-right: 10px;
+  background-color: #222;
+  color: #aaa;
+}
+
+.sports-tab.active {
+  background-color: #fff;
+  color: #000;
+}
+
+.match-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid #222;
+}
+
+.league-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background-color: #1a1a1a;
+  border-bottom: 1px solid #222;
+}
+
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  background-color: #121212;
+  border-top: 1px solid #222;
+  padding: 10px 0;
+  z-index: 50;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #888;
+  font-size: 10px;
+}
+
+.nav-item.active {
+  color: #ff6b00;
+}
+
+.nav-item svg {
+  margin-bottom: 4px;
+}
+
 /* Mobile optimizations */
 @media (max-width: 768px) {
   .container {
-    padding-left: 1rem;
-    padding-right: 1rem;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  
+  .mobile-content-area {
+    padding-bottom: 60px; /* Space for bottom nav */
   }
 }
 
 /* Ensure main content doesn't stretch too wide on large displays */
-@media (min-width: 1280px) {
+@media (min-width: 768px) {
   .max-w-6xl {
-    max-width: 1152px;
+    max-width: 1000px;
   }
 }

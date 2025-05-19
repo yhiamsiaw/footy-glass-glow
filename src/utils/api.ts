@@ -1,24 +1,15 @@
+
 import { ApiResponse, Match, MatchDetails, TopLeague, FixtureStatus } from "../types/football";
 import { toast } from "@/hooks/use-toast";
-import { ApiCache } from "./apiCache";
 
 const BASE_URL = "https://v3.football.api-sports.io";
-const API_KEY = "3ce4814889a3a7f737acd626e6271630";
+const API_KEY = "483ba1cf5072a6dbf7d1d7ca6e2ffc56";
 
 /**
  * Base fetch function with API headers
  */
-const fetchFromApi = async <T>(endpoint: string, endpointType: string = 'default'): Promise<T> => {
+const fetchFromApi = async <T>(endpoint: string): Promise<T> => {
   try {
-    // Check if we can make this request based on rate limits
-    if (!ApiCache.canMakeRequest(endpointType)) {
-      console.warn(`API rate limit reached for ${endpointType}`);
-      throw new Error(`API rate limit reached. Please try again later.`);
-    }
-    
-    // Track this request
-    ApiCache.trackRequest(endpointType);
-    
     const response = await fetch(`${BASE_URL}${endpoint}`, {
       method: "GET",
       headers: {
@@ -47,7 +38,7 @@ const fetchFromApi = async <T>(endpoint: string, endpointType: string = 'default
  * Get live matches
  */
 export const getLiveMatches = async (): Promise<Match[]> => {
-  const data = await fetchFromApi<ApiResponse<Match[]>>("/fixtures?live=all", "live");
+  const data = await fetchFromApi<ApiResponse<Match[]>>("/fixtures?live=all");
   return data.response;
 };
 
@@ -55,7 +46,7 @@ export const getLiveMatches = async (): Promise<Match[]> => {
  * Get fixtures by date (YYYY-MM-DD format)
  */
 export const getFixturesByDate = async (date: string): Promise<Match[]> => {
-  const data = await fetchFromApi<ApiResponse<Match[]>>(`/fixtures?date=${date}`, "fixtures");
+  const data = await fetchFromApi<ApiResponse<Match[]>>(`/fixtures?date=${date}`);
   return data.response;
 };
 
@@ -63,19 +54,11 @@ export const getFixturesByDate = async (date: string): Promise<Match[]> => {
  * Get match details by ID
  */
 export const getMatchDetails = async (fixtureId: number): Promise<MatchDetails> => {
-  // Check cache first
-  const cacheKey = `match_${fixtureId}`;
-  const cachedData = ApiCache.get(cacheKey);
-  
-  if (cachedData && Date.now() - ApiCache.getTimestamp(cacheKey) < 60000) { // 1 minute cache
-    return cachedData as MatchDetails;
-  }
-  
   const [fixtureData, lineups, events, stats] = await Promise.all([
-    fetchFromApi<ApiResponse<Match[]>>(`/fixtures?id=${fixtureId}`, "fixtures"),
-    fetchFromApi<ApiResponse<any[]>>(`/fixtures/lineups?fixture=${fixtureId}`, "fixtures"),
-    fetchFromApi<ApiResponse<any[]>>(`/fixtures/events?fixture=${fixtureId}`, "fixtures"),
-    fetchFromApi<ApiResponse<any[]>>(`/fixtures/statistics?fixture=${fixtureId}`, "fixtures"),
+    fetchFromApi<ApiResponse<Match[]>>(`/fixtures?id=${fixtureId}`),
+    fetchFromApi<ApiResponse<any[]>>(`/fixtures/lineups?fixture=${fixtureId}`),
+    fetchFromApi<ApiResponse<any[]>>(`/fixtures/events?fixture=${fixtureId}`),
+    fetchFromApi<ApiResponse<any[]>>(`/fixtures/statistics?fixture=${fixtureId}`),
   ]);
 
   // Merge all the data into a single MatchDetails object
@@ -85,9 +68,6 @@ export const getMatchDetails = async (fixtureId: number): Promise<MatchDetails> 
     events: events.response,
     statistics: stats.response,
   };
-  
-  // Cache the result
-  ApiCache.set(cacheKey, matchDetails, 60000); // Cache for 1 minute
   
   return matchDetails;
 };
@@ -104,16 +84,11 @@ export const getTopLeagues = async (): Promise<TopLeague[]> => {
     135, // Serie A
     61, // Ligue 1
     2, // Champions League
+    3, // Europa League
+    848, // Conference League
   ];
   
-  const cacheKey = 'topLeagues';
-  const cachedData = ApiCache.get(cacheKey);
-  
-  if (cachedData && Date.now() - ApiCache.getTimestamp(cacheKey) < 24 * 60 * 60 * 1000) { // 24 hour cache
-    return cachedData as TopLeague[];
-  }
-  
-  const data = await fetchFromApi<ApiResponse<any[]>>(`/leagues?id=${leagueIds.join(',')}`, "leagues");
+  const data = await fetchFromApi<ApiResponse<any[]>>(`/leagues?id=${leagueIds.join(',')}`);
   
   const leagues: TopLeague[] = data.response.map(item => ({
     id: item.league.id,
@@ -123,9 +98,6 @@ export const getTopLeagues = async (): Promise<TopLeague[]> => {
     flag: item.country.flag,
   }));
   
-  // Cache the result
-  ApiCache.set(cacheKey, leagues, 24 * 60 * 60 * 1000); // Cache for 24 hours
-  
   return leagues;
 };
 
@@ -133,7 +105,7 @@ export const getTopLeagues = async (): Promise<TopLeague[]> => {
  * Search matches by team name
  */
 export const searchMatchesByTeam = async (teamName: string): Promise<Match[]> => {
-  const data = await fetchFromApi<ApiResponse<Match[]>>(`/fixtures?team=${teamName}`, "fixtures");
+  const data = await fetchFromApi<ApiResponse<Match[]>>(`/fixtures?team=${teamName}`);
   return data.response;
 };
 
@@ -141,21 +113,9 @@ export const searchMatchesByTeam = async (teamName: string): Promise<Match[]> =>
  * Get league standings
  */
 export const getLeagueStandings = async (leagueId: number, season: number = 2024): Promise<any> => {
-  const cacheKey = `standings_${leagueId}_${season}`;
-  const cachedData = ApiCache.get(cacheKey);
-  
-  if (cachedData && Date.now() - ApiCache.getTimestamp(cacheKey) < 6 * 60 * 60 * 1000) { // 6 hour cache
-    return cachedData;
-  }
-  
   const data = await fetchFromApi<ApiResponse<any[]>>(
-    `/standings?league=${leagueId}&season=${season}`, 
-    "leagues"
+    `/standings?league=${leagueId}&season=${season}`
   );
-  
-  // Cache the result
-  ApiCache.set(cacheKey, data.response, 6 * 60 * 60 * 1000); // Cache for 6 hours
-  
   return data.response;
 };
 
