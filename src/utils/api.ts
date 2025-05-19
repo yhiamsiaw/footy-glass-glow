@@ -168,3 +168,59 @@ export const getTopLeagues = async (): Promise<TopLeague[]> => {
     return [];
   }
 };
+
+// Get league standings
+export const getLeagueStandings = async (
+  leagueId: number,
+  season: number
+): Promise<any[]> => {
+  try {
+    const response = await apiClient.get<ApiResponse<any[]>>("/standings", {
+      params: {
+        league: leagueId,
+        season: season,
+      },
+    });
+    
+    return response.data.response;
+  } catch (error) {
+    console.error("Error fetching league standings:", error);
+    return [];
+  }
+};
+
+// Search matches by team name
+export const searchMatchesByTeam = async (query: string): Promise<Match[]> => {
+  try {
+    // First search for teams matching the query
+    const teamsResponse = await apiClient.get<ApiResponse<any[]>>("/teams", {
+      params: {
+        search: query,
+      },
+    });
+    
+    if (teamsResponse.data.response.length === 0) {
+      return [];
+    }
+    
+    // Get team IDs
+    const teamIds = teamsResponse.data.response.map((team) => team.team.id);
+    
+    // Get today's date
+    const today = getTodayDate();
+    
+    // Get matches for these teams (today and future matches)
+    const matchesResponse = await apiClient.get<ApiResponse<Match[]>>("/fixtures", {
+      params: {
+        team: teamIds.join("-"),
+        from: today,
+        to: new Date(new Date().setDate(new Date().getDate() + 14)).toISOString().split("T")[0], // next 14 days
+      },
+    });
+    
+    return matchesResponse.data.response;
+  } catch (error) {
+    console.error("Error searching matches:", error);
+    return [];
+  }
+};

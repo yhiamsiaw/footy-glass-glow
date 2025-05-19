@@ -9,9 +9,10 @@ import { LogoFallback } from "@/components/LogoFallback";
 interface SidebarProps {
   leagues: TopLeague[];
   loading: boolean;
+  isMobile?: boolean;
 }
 
-export const Sidebar = ({ leagues, loading }: SidebarProps) => {
+export const Sidebar = ({ leagues, loading, isMobile = false }: SidebarProps) => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
 
