@@ -18,6 +18,7 @@ export const MatchCard = ({ match, className, isMobile = false }: MatchCardProps
   const { fixture, teams, goals, league } = match;
   const [homeLogoError, setHomeLogoError] = useState(false);
   const [awayLogoError, setAwayLogoError] = useState(false);
+  const [leagueLogoError, setLeagueLogoError] = useState(false);
   
   // Get match status
   const statusType = getMatchStatusType(
@@ -38,12 +39,18 @@ export const MatchCard = ({ match, className, isMobile = false }: MatchCardProps
     return (
       <Link
         to={`/match/${fixture.id}`}
-        className="match-item flex items-center justify-between"
+        className="flex items-center bg-[#121212] border-b border-gray-800 p-3 relative"
       >
-        <div className="flex items-center">
-          <div className="mr-3 w-12 text-center text-xs">
+        {/* Status indicator */}
+        {isLive && (
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500"></div>
+        )}
+        
+        <div className="flex items-center flex-1">
+          {/* Match time or status */}
+          <div className="w-14 text-center mr-2">
             {statusType === "UPCOMING" ? (
-              matchTime
+              <div className="text-xs text-gray-400">{matchTime}</div>
             ) : (
               <MatchStatusBadge 
                 status={statusType}
@@ -52,56 +59,81 @@ export const MatchCard = ({ match, className, isMobile = false }: MatchCardProps
             )}
           </div>
           
-          <div className="flex flex-col">
+          {/* Teams */}
+          <div className="flex-1 flex flex-col min-w-0">
+            {/* Home team */}
             <div className="flex items-center mb-2">
-              {homeLogoError ? (
-                <LogoFallback className="h-5 w-5 mr-2" teamName={teams.home.name} />
-              ) : (
-                <img
-                  src={teams.home.logo}
-                  alt=""
-                  className="h-5 w-5 mr-2 object-contain"
-                  loading="lazy"
-                  onError={() => setHomeLogoError(true)}
-                />
-              )}
-              <span className={teams.home.winner ? "font-bold" : ""}>
-                {teams.home.name}
-              </span>
+              <div className="w-6 h-6 mr-2 flex-shrink-0">
+                {homeLogoError ? (
+                  <LogoFallback className="h-6 w-6" teamName={teams.home.name} />
+                ) : (
+                  <img
+                    src={teams.home.logo}
+                    alt=""
+                    className="h-6 w-6 object-contain"
+                    loading="lazy"
+                    onError={() => setHomeLogoError(true)}
+                  />
+                )}
+              </div>
+              <div className="truncate">
+                <span className={cn(
+                  "text-sm", 
+                  teams.home.winner ? "font-bold text-white" : "text-gray-300"
+                )}>
+                  {teams.home.name}
+                </span>
+              </div>
             </div>
             
+            {/* Away team */}
             <div className="flex items-center">
-              {awayLogoError ? (
-                <LogoFallback className="h-5 w-5 mr-2" teamName={teams.away.name} />
-              ) : (
-                <img
-                  src={teams.away.logo}
-                  alt=""
-                  className="h-5 w-5 mr-2 object-contain"
-                  loading="lazy"
-                  onError={() => setAwayLogoError(true)}
-                />
-              )}
-              <span className={teams.away.winner ? "font-bold" : ""}>
-                {teams.away.name}
-              </span>
+              <div className="w-6 h-6 mr-2 flex-shrink-0">
+                {awayLogoError ? (
+                  <LogoFallback className="h-6 w-6" teamName={teams.away.name} />
+                ) : (
+                  <img
+                    src={teams.away.logo}
+                    alt=""
+                    className="h-6 w-6 object-contain"
+                    loading="lazy"
+                    onError={() => setAwayLogoError(true)}
+                  />
+                )}
+              </div>
+              <div className="truncate">
+                <span className={cn(
+                  "text-sm", 
+                  teams.away.winner ? "font-bold text-white" : "text-gray-300"
+                )}>
+                  {teams.away.name}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
-        
-        <div className="flex items-center">
+          
+          {/* Score */}
           {statusType !== "UPCOMING" && (
-            <div className="text-center mr-4">
-              <div className="text-lg font-bold">{goals.home}</div>
-              <div className="text-lg font-bold">{goals.away}</div>
+            <div className="w-8 flex flex-col items-center">
+              <div className={`text-base ${teams.home.winner ? "font-bold" : ""}`}>
+                {goals.home}
+              </div>
+              <div className={`text-base ${teams.away.winner ? "font-bold" : ""}`}>
+                {goals.away}
+              </div>
             </div>
           )}
-          <Star className="h-5 w-5 text-gray-600" />
+          
+          {/* Favorite icon */}
+          <div className="ml-2">
+            <Star className="h-5 w-5 text-gray-700" />
+          </div>
         </div>
       </Link>
     );
   }
 
+  // For desktop view
   return (
     <Link
       to={`/match/${fixture.id}`}

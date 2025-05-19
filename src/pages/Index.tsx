@@ -1,12 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Match, League, TopLeague, FixtureStatus } from "@/types/football";
 import { LeagueSection } from "@/components/LeagueSection";
 import { MainHeader } from "@/components/MainHeader";
 import { MobileHeader } from "@/components/MobileHeader";
-import { SportsTabs } from "@/components/SportsTabs";
-import { DateNavigation } from "@/components/DateNavigation";
+import { MobileFilterTabs } from "@/components/MobileFilterTabs";
 import { MobileNavigation } from "@/components/MobileNavigation";
 import { Sidebar } from "@/components/Sidebar";
 import { MatchCard } from "@/components/MatchCard";
@@ -14,6 +12,7 @@ import { getLiveMatches, getTopLeagues, getTodayDate, getFixturesByDate, getMatc
 import { useToast } from "@/hooks/use-toast";
 import { Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { LogoFallback } from "@/components/LogoFallback";
 
 const Index = () => {
   const [matches, setMatches] = useState<Match[]>([]);
@@ -167,6 +166,22 @@ const Index = () => {
     setActiveTab("all"); // Reset active tab when changing date
   };
 
+  const handleMobileFilterChange = (filter: string) => {
+    if (filter === 'all') {
+      setActiveTab("all");
+      setStatusFilter(null);
+    } else if (filter === 'live') {
+      setActiveTab("live");
+      setStatusFilter("LIVE");
+    } else if (filter === 'finished') {
+      setActiveTab("finished");
+      setStatusFilter("FT");
+    } else if (filter === 'scheduled') {
+      setActiveTab("scheduled");
+      setStatusFilter("UPCOMING");
+    }
+  };
+
   const renderDesktopLayout = () => (
     <>
       <MainHeader onSearch={handleSearch} onStatusFilter={handleStatusFilter} />
@@ -282,44 +297,15 @@ const Index = () => {
   const renderMobileLayout = () => (
     <div className="livescore-mobile min-h-screen pb-16">
       <MobileHeader onSearch={handleSearch} />
-      <SportsTabs />
-      <DateNavigation onDateChange={handleDateChange} />
-      
-      {/* Mobile tabs */}
-      <div className="flex border-b border-gray-700 bg-[#121212]">
-        <button 
-          className={`flex-1 px-2 py-3 text-xs font-medium ${activeTab === 'all' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
-          onClick={() => setActiveTab("all")}
-        >
-          ALL
-        </button>
-        <button 
-          className={`flex-1 px-2 py-3 text-xs font-medium ${activeTab === 'live' ? 'text-red-400 border-b-2 border-red-400' : 'text-gray-400'}`}
-          onClick={() => setActiveTab("live")}
-        >
-          LIVE
-        </button>
-        <button 
-          className={`flex-1 px-2 py-3 text-xs font-medium ${activeTab === 'finished' ? 'text-gray-200 border-b-2 border-gray-200' : 'text-gray-400'}`}
-          onClick={() => setActiveTab("finished")}
-        >
-          FINISHED
-        </button>
-        <button 
-          className={`flex-1 px-2 py-3 text-xs font-medium ${activeTab === 'scheduled' ? 'text-green-400 border-b-2 border-green-400' : 'text-gray-400'}`}
-          onClick={() => setActiveTab("scheduled")}
-        >
-          UPCOMING
-        </button>
-      </div>
+      <MobileFilterTabs onFilterChange={handleMobileFilterChange} />
       
       <div className="mobile-content-area">
         {loading ? (
-          <div className="space-y-4 p-4">
+          <div className="space-y-2 p-4">
             {[...Array(5)].map((_, i) => (
               <div key={i} className="animate-pulse">
-                <div className="h-10 bg-[#1a1a1a] rounded-md mb-1"></div>
-                <div className="space-y-1">
+                <div className="h-8 bg-[#1a1a1a] rounded-md mb-1"></div>
+                <div className="space-y-2">
                   {[...Array(2)].map((_, j) => (
                     <div key={j} className="h-16 bg-[#1a1a1a] rounded-md"></div>
                   ))}
@@ -330,22 +316,26 @@ const Index = () => {
         ) : matches.length > 0 ? (
           <div>
             {sortedMatchesByLeague.map(({ league, matches }) => (
-              <div key={league.id} className="mb-4">
-                <div className="league-header">
-                  <div className="flex items-center">
+              <div key={league.id} className="mb-2">
+                <div className="league-header flex items-center p-3 bg-[#1a1a1a]">
+                  {league.logo ? (
                     <img 
                       src={league.logo} 
-                      alt={league.name}
-                      className="w-6 h-6 mr-2 object-contain"
+                      alt=""
+                      className="w-5 h-5 mr-2 object-contain"
                       onError={(e) => {
                         e.currentTarget.onerror = null;
                         e.currentTarget.src = '';
+                        // Add a class to parent to indicate error 
+                        e.currentTarget.parentElement?.classList.add('logo-error');
                       }} 
                     />
-                    <div>
-                      <div className="text-sm font-semibold">{league.name}</div>
-                      <div className="text-xs text-gray-400">{league.country}</div>
-                    </div>
+                  ) : (
+                    <LogoFallback className="w-5 h-5 mr-2" isLeague={true} />
+                  )}
+                  <div>
+                    <div className="text-sm font-semibold">{league.name}</div>
+                    <div className="text-xs text-gray-400">{league.country}</div>
                   </div>
                 </div>
                 

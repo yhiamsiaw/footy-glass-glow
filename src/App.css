@@ -1,3 +1,93 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 40% 8%;
+    --foreground: 0 0% 100%;
+
+    --card: 214 40% 12%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 214 40% 12%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 210 100% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 25 95% 53%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 214 40% 15%;
+    --muted-foreground: 210 40% 70%;
+
+    --accent: 210 100% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 40% 15%;
+    --input: 214 40% 15%;
+    --ring: 210 40% 70%;
+
+    --radius: 0.375rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: 'Inter', sans-serif;
+  }
+  
+  /* FlashScore-inspired styles */
+  .fs-header {
+    @apply bg-[#0a111a] h-14 border-b border-gray-800;
+  }
+  
+  .fs-body {
+    @apply bg-[#0c1218];
+  }
+  
+  .fs-sidebar {
+    @apply bg-[#0a111a] border-r border-gray-800;
+  }
+  
+  /* Match status badges */
+  .status-live {
+    @apply bg-red-600/20 text-red-500 px-1.5 py-0.5 rounded text-xs font-medium;
+  }
+  
+  .status-finished {
+    @apply bg-gray-600/20 text-gray-500 px-1.5 py-0.5 rounded text-xs font-medium;
+  }
+  
+  .status-upcoming {
+    @apply bg-blue-600/20 text-blue-500 px-1.5 py-0.5 rounded text-xs font-medium;
+  }
+  
+  /* League section styles */
+  .league-header {
+    @apply bg-gray-900 hover:bg-gray-800 transition-colors;
+  }
+  
+  /* Match card styles */
+  .match-card {
+    @apply border-b border-gray-800 hover:bg-gray-800/30 transition-colors;
+  }
+  
+  .match-card-live {
+    @apply border-l-2 border-l-red-500;
+  }
+}
 
 #root {
   max-width: 100%;
@@ -43,56 +133,15 @@
 
 /* LiveScore Mobile Design Styles */
 .livescore-mobile {
-  background-color: #121212;
+  background-color: #0c1218;
   color: #ffffff;
+  min-height: 100vh;
 }
 
 .livescore-header {
-  background-color: #121212;
-  border-bottom: 1px solid #222;
+  background-color: #0a111a;
+  border-bottom: 1px solid #1e2834;
   padding: 12px 16px;
-}
-
-.sports-tabs {
-  display: flex;
-  overflow-x: auto;
-  scrollbar-width: none;
-  padding: 8px 12px;
-  background-color: #121212;
-  border-bottom: 1px solid #222;
-}
-
-.sports-tabs::-webkit-scrollbar {
-  display: none;
-}
-
-.sports-tab {
-  padding: 8px 16px;
-  border-radius: 24px;
-  white-space: nowrap;
-  font-size: 14px;
-  font-weight: 600;
-  margin-right: 10px;
-  background-color: #222;
-  color: #aaa;
-}
-
-.sports-tab.active {
-  background-color: #fff;
-  color: #000;
-}
-
-.match-item {
-  padding: 12px 16px;
-  border-bottom: 1px solid #222;
-}
-
-.league-header {
-  display: flex;
-  align-items: center;
-  padding: 12px 16px;
-  background-color: #1a1a1a;
-  border-bottom: 1px solid #222;
 }
 
 .mobile-bottom-nav {
@@ -101,9 +150,9 @@
   width: 100%;
   display: flex;
   justify-content: space-around;
-  background-color: #121212;
-  border-top: 1px solid #222;
-  padding: 10px 0;
+  background-color: #0a111a;
+  border-top: 1px solid #1e2834;
+  padding: 8px 0;
   z-index: 50;
 }
 
@@ -116,7 +165,7 @@
 }
 
 .nav-item.active {
-  color: #ff6b00;
+  color: #3b82f6;
 }
 
 .nav-item svg {
@@ -131,7 +180,22 @@
   }
   
   .mobile-content-area {
-    padding-bottom: 60px; /* Space for bottom nav */
+    padding-bottom: 70px; /* Space for bottom nav */
+  }
+  
+  .league-header {
+    background-color: #1a1a1a;
+    border-bottom: 1px solid #222;
+  }
+  
+  .league-header.logo-error:before {
+    content: '';
+    display: block;
+    width: 20px;
+    height: 20px;
+    background-color: #2a2a2a;
+    border-radius: 50%;
+    margin-right: 8px;
   }
 }
 
