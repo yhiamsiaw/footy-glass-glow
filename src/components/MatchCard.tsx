@@ -7,6 +7,7 @@ import { getMatchStatusType } from "@/utils/api";
 import { cn } from "@/lib/utils";
 import { LogoFallback } from "@/components/LogoFallback";
 import { Star } from "lucide-react";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 
 interface MatchCardProps {
   match: Match;
@@ -19,6 +20,9 @@ export const MatchCard = ({ match, className, isMobile = false }: MatchCardProps
   const [homeLogoError, setHomeLogoError] = useState(false);
   const [awayLogoError, setAwayLogoError] = useState(false);
   const [leagueLogoError, setLeagueLogoError] = useState(false);
+  
+  const [favoriteMatches, setFavoriteMatches] = useLocalStorage<number[]>("favoriteMatches", []);
+  const isFavorite = favoriteMatches.includes(fixture.id);
   
   // Get match status
   const statusType = getMatchStatusType(
@@ -35,15 +39,29 @@ export const MatchCard = ({ match, className, isMobile = false }: MatchCardProps
   // Determine if this is a live match for styling
   const isLive = statusType === "LIVE";
 
+  const toggleFavorite = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (isFavorite) {
+      setFavoriteMatches(favoriteMatches.filter(id => id !== fixture.id));
+    } else {
+      setFavoriteMatches([...favoriteMatches, fixture.id]);
+    }
+  };
+
   if (isMobile) {
     return (
       <Link
         to={`/match/${fixture.id}`}
-        className="flex items-center bg-[#121212] border-b border-gray-800 p-3 relative"
+        className={cn(
+          "flex items-center bg-[#121212] border-b border-gray-800 p-3 relative",
+          isLive && "bg-gradient-to-r from-orange-900/20 to-[#121212]"
+        )}
       >
         {/* Status indicator */}
         {isLive && (
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500"></div>
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-orange-500 animate-pulse"></div>
         )}
         
         <div className="flex items-center flex-1">
@@ -126,7 +144,10 @@ export const MatchCard = ({ match, className, isMobile = false }: MatchCardProps
           
           {/* Favorite icon */}
           <div className="ml-2">
-            <Star className="h-5 w-5 text-gray-700" />
+            <Star 
+              onClick={toggleFavorite}
+              className={`h-5 w-5 ${isFavorite ? "text-yellow-500 fill-yellow-500" : "text-gray-700"}`} 
+            />
           </div>
         </div>
       </Link>
@@ -139,7 +160,7 @@ export const MatchCard = ({ match, className, isMobile = false }: MatchCardProps
       to={`/match/${fixture.id}`}
       className={cn(
         "flex items-center hover:bg-white/5 transition-colors py-3 px-2 border-b border-gray-800",
-        isLive ? "border-l-2 border-l-red-500" : "",
+        isLive && "border-l-2 border-l-orange-500 bg-gradient-to-r from-orange-900/10 to-transparent",
         className
       )}
     >
@@ -203,6 +224,14 @@ export const MatchCard = ({ match, className, isMobile = false }: MatchCardProps
               <div className="text-sm">{goals.away}</div>
             </>
           )}
+        </div>
+        
+        {/* Favorite star for desktop */}
+        <div className="pl-3">
+          <Star 
+            onClick={toggleFavorite}
+            className={`h-5 w-5 cursor-pointer ${isFavorite ? "text-yellow-500 fill-yellow-500" : "text-gray-700 hover:text-gray-400"}`} 
+          />
         </div>
       </div>
     </Link>

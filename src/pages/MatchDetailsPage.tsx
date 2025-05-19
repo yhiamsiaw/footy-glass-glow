@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { MatchDetails as MatchDetailsType, TopLeague } from "@/types/football";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { MobileNavigation } from "@/components/MobileNavigation";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 
 const MatchDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -18,6 +19,8 @@ const MatchDetailsPage = () => {
   const [topLeagues, setTopLeagues] = useState<TopLeague[]>([]);
   const [isMobile, setIsMobile] = useState(false);
   const { toast } = useToast();
+  const [favoriteMatches] = useLocalStorage<number[]>("favoriteMatches", []);
+  const isFavorite = id ? favoriteMatches.includes(parseInt(id)) : false;
 
   // Check for mobile viewport
   useEffect(() => {
@@ -86,11 +89,11 @@ const MatchDetailsPage = () => {
 
   if (isMobile) {
     return (
-      <div className="livescore-mobile min-h-screen pb-16">
-        <div className="livescore-header flex items-center justify-between">
+      <div className="livescore-mobile min-h-screen bg-[#121212] pb-16">
+        <div className="sticky top-0 z-30 bg-[#0a111a] border-b border-gray-800 p-4 flex items-center justify-between">
           <button 
             onClick={() => navigate(-1)}
-            className="flex items-center"
+            className="flex items-center text-white"
           >
             <ChevronLeft className="h-5 w-5 mr-1" />
             Back
@@ -114,7 +117,7 @@ const MatchDetailsPage = () => {
               </div>
             </div>
           ) : match ? (
-            <MatchDetails match={match} />
+            <MatchDetails match={match} isFavorite={isFavorite} />
           ) : (
             <div className="p-12 bg-[#1a1a1a] rounded-lg text-center">
               <h2 className="text-2xl font-bold mb-3">Match not found</h2>
@@ -169,7 +172,7 @@ const MatchDetailsPage = () => {
                   </div>
                 </div>
               ) : match ? (
-                <MatchDetails match={match} />
+                <MatchDetails match={match} isFavorite={isFavorite} />
               ) : (
                 <div className="p-12 bg-gray-800/50 rounded-lg text-center">
                   <h2 className="text-2xl font-bold mb-3">Match not found</h2>

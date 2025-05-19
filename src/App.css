@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
@@ -48,35 +49,31 @@
     font-family: 'Inter', sans-serif;
   }
   
-  /* FlashScore-inspired styles */
-  .fs-header {
-    @apply bg-[#0a111a] h-14 border-b border-gray-800;
-  }
-  
-  .fs-body {
-    @apply bg-[#0c1218];
-  }
-  
-  .fs-sidebar {
-    @apply bg-[#0a111a] border-r border-gray-800;
+  /* LiveScore-inspired styles */
+  .livescore-mobile {
+    @apply bg-[#121212];
   }
   
   /* Match status badges */
   .status-live {
-    @apply bg-red-600/20 text-red-500 px-1.5 py-0.5 rounded text-xs font-medium;
+    @apply bg-orange-600/20 text-orange-500 px-1.5 py-0.5 rounded-full text-xs font-medium;
   }
   
   .status-finished {
-    @apply bg-gray-600/20 text-gray-500 px-1.5 py-0.5 rounded text-xs font-medium;
+    @apply bg-gray-600/20 text-gray-500 px-1.5 py-0.5 rounded-full text-xs font-medium;
   }
   
   .status-upcoming {
-    @apply bg-blue-600/20 text-blue-500 px-1.5 py-0.5 rounded text-xs font-medium;
+    @apply bg-blue-600/20 text-blue-500 px-1.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  
+  .status-halftime {
+    @apply bg-green-600/20 text-green-500 px-1.5 py-0.5 rounded-full text-xs font-medium;
   }
   
   /* League section styles */
   .league-header {
-    @apply bg-gray-900 hover:bg-gray-800 transition-colors;
+    @apply bg-[#1a1a1a] hover:bg-[#222222] transition-colors;
   }
   
   /* Match card styles */
@@ -85,7 +82,7 @@
   }
   
   .match-card-live {
-    @apply border-l-2 border-l-red-500;
+    @apply border-l-2 border-l-orange-500 bg-gradient-to-r from-orange-900/20 to-transparent;
   }
 }
 
@@ -133,7 +130,7 @@
 
 /* LiveScore Mobile Design Styles */
 .livescore-mobile {
-  background-color: #0c1218;
+  background-color: #121212;
   color: #ffffff;
   min-height: 100vh;
 }
@@ -196,6 +193,23 @@
     background-color: #2a2a2a;
     border-radius: 50%;
     margin-right: 8px;
+  }
+  
+  /* Animations for live matches */
+  .match-live-indicator {
+    animation: pulse-animation 2s infinite;
+  }
+  
+  @keyframes pulse-animation {
+    0% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+    100% {
+      opacity: 1;
+    }
   }
 }
 

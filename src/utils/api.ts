@@ -1,152 +1,170 @@
 
-import { ApiResponse, Match, MatchDetails, TopLeague, FixtureStatus } from "../types/football";
-import { toast } from "@/hooks/use-toast";
+import axios from "axios";
+import { ApiResponse, Match, MatchDetails, TopLeague } from "@/types/football";
 
-const BASE_URL = "https://v3.football.api-sports.io";
-const API_KEY = "483ba1cf5072a6dbf7d1d7ca6e2ffc56";
+const API_KEY = "483ba1cf5072a6dbf7d1d7ca6e2ffc56"; // Updated API key
+const API_BASE_URL = "https://v3.football.api-sports.io";
 
-/**
- * Base fetch function with API headers
- */
-const fetchFromApi = async <T>(endpoint: string): Promise<T> => {
+// Configure axios instance
+const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    "x-apisports-key": API_KEY,
+  },
+});
+
+// Get today's date in YYYY-MM-DD format
+export const getTodayDate = () => {
+  const today = new Date();
+  return today.toISOString().split("T")[0];
+};
+
+// Get match status type from API status
+export const getMatchStatusType = (
+  status: string,
+  elapsed?: number
+): "LIVE" | "FT" | "UPCOMING" | "HT" => {
+  switch (status) {
+    case "1H":
+    case "2H":
+    case "ET":
+    case "P":
+    case "BT":
+    case "SUSP":
+    case "INT":
+    case "LIVE":
+      return "LIVE";
+    case "HT":
+    case "BREAK":
+      return "HT";
+    case "FT":
+    case "AET":
+    case "PEN":
+    case "CANC":
+    case "ABD":
+    case "AWD":
+    case "WO":
+      return "FT";
+    default:
+      return "UPCOMING";
+  }
+};
+
+// Get live matches
+export const getLiveMatches = async (): Promise<Match[]> => {
   try {
-    const response = await fetch(`${BASE_URL}${endpoint}`, {
-      method: "GET",
-      headers: {
-        "x-apisports-key": API_KEY,
+    const response = await apiClient.get<ApiResponse<Match[]>>("/fixtures", {
+      params: {
+        live: "all",
       },
     });
-
-    if (!response.ok) {
-      throw new Error(`API request failed: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data;
+    return response.data.response;
   } catch (error) {
-    console.error("API request error:", error);
-    toast({
-      title: "Error fetching data",
-      description: "Please try again later",
-      variant: "destructive",
+    console.error("Error fetching live matches:", error);
+    return [];
+  }
+};
+
+// Get fixtures by date
+export const getFixturesByDate = async (date: string): Promise<Match[]> => {
+  try {
+    const response = await apiClient.get<ApiResponse<Match[]>>("/fixtures", {
+      params: {
+        date,
+      },
     });
+    return response.data.response;
+  } catch (error) {
+    console.error("Error fetching fixtures by date:", error);
+    return [];
+  }
+};
+
+// Get match details
+export const getMatchDetails = async (
+  fixtureId: number
+): Promise<MatchDetails> => {
+  try {
+    // Fetch fixture details
+    const fixtureResponse = await apiClient.get<ApiResponse<Match[]>>(
+      "/fixtures",
+      {
+        params: {
+          id: fixtureId,
+        },
+      }
+    );
+    
+    // Fetch fixture events
+    const eventsResponse = await apiClient.get<ApiResponse<any[]>>(
+      "/fixtures/events",
+      {
+        params: {
+          fixture: fixtureId,
+        },
+      }
+    );
+    
+    // Fetch lineups
+    const lineupsResponse = await apiClient.get<ApiResponse<any[]>>(
+      "/fixtures/lineups",
+      {
+        params: {
+          fixture: fixtureId,
+        },
+      }
+    );
+    
+    // Fetch statistics
+    const statisticsResponse = await apiClient.get<ApiResponse<any[]>>(
+      "/fixtures/statistics",
+      {
+        params: {
+          fixture: fixtureId,
+        },
+      }
+    );
+    
+    // Combine all data into a MatchDetails object
+    const fixtureData = fixtureResponse.data.response[0];
+    const matchDetails: MatchDetails = {
+      ...fixtureData,
+      events: eventsResponse.data.response,
+      lineups: lineupsResponse.data.response,
+      statistics: statisticsResponse.data.response,
+    };
+    
+    return matchDetails;
+  } catch (error) {
+    console.error("Error fetching match details:", error);
     throw error;
   }
 };
 
-/**
- * Get live matches
- */
-export const getLiveMatches = async (): Promise<Match[]> => {
-  const data = await fetchFromApi<ApiResponse<Match[]>>("/fixtures?live=all");
-  return data.response;
-};
-
-/**
- * Get fixtures by date (YYYY-MM-DD format)
- */
-export const getFixturesByDate = async (date: string): Promise<Match[]> => {
-  const data = await fetchFromApi<ApiResponse<Match[]>>(`/fixtures?date=${date}`);
-  return data.response;
-};
-
-/**
- * Get match details by ID
- */
-export const getMatchDetails = async (fixtureId: number): Promise<MatchDetails> => {
-  const [fixtureData, lineups, events, stats] = await Promise.all([
-    fetchFromApi<ApiResponse<Match[]>>(`/fixtures?id=${fixtureId}`),
-    fetchFromApi<ApiResponse<any[]>>(`/fixtures/lineups?fixture=${fixtureId}`),
-    fetchFromApi<ApiResponse<any[]>>(`/fixtures/events?fixture=${fixtureId}`),
-    fetchFromApi<ApiResponse<any[]>>(`/fixtures/statistics?fixture=${fixtureId}`),
-  ]);
-
-  // Merge all the data into a single MatchDetails object
-  const matchDetails: MatchDetails = {
-    ...fixtureData.response[0],
-    lineups: lineups.response,
-    events: events.response,
-    statistics: stats.response,
-  };
-  
-  return matchDetails;
-};
-
-/**
- * Get top leagues data
- */
+// Get top leagues
 export const getTopLeagues = async (): Promise<TopLeague[]> => {
-  // These are the IDs for the top leagues we want to display
-  const leagueIds = [
-    39, // Premier League
-    140, // La Liga
-    78, // Bundesliga
-    135, // Serie A
-    61, // Ligue 1
-    2, // Champions League
-    3, // Europa League
-    848, // Conference League
-  ];
-  
-  const data = await fetchFromApi<ApiResponse<any[]>>(`/leagues?id=${leagueIds.join(',')}`);
-  
-  const leagues: TopLeague[] = data.response.map(item => ({
-    id: item.league.id,
-    name: item.league.name,
-    logo: item.league.logo,
-    country: item.country.name,
-    flag: item.country.flag,
-  }));
-  
-  return leagues;
-};
-
-/**
- * Search matches by team name
- */
-export const searchMatchesByTeam = async (teamName: string): Promise<Match[]> => {
-  const data = await fetchFromApi<ApiResponse<Match[]>>(`/fixtures?team=${teamName}`);
-  return data.response;
-};
-
-/**
- * Get league standings
- */
-export const getLeagueStandings = async (leagueId: number, season: number = 2024): Promise<any> => {
-  const data = await fetchFromApi<ApiResponse<any[]>>(
-    `/standings?league=${leagueId}&season=${season}`
-  );
-  return data.response;
-};
-
-/**
- * Format match date to local time
- */
-export const formatMatchTime = (timestamp: number): string => {
-  return new Date(timestamp * 1000).toLocaleTimeString([], { 
-    hour: '2-digit', 
-    minute: '2-digit' 
-  });
-};
-
-/**
- * Get today's date in YYYY-MM-DD format
- */
-export const getTodayDate = (): string => {
-  const today = new Date();
-  return today.toISOString().split('T')[0];
-};
-
-/**
- * Helper to determine match status badge type
- */
-export const getMatchStatusType = (status: string, elapsed?: number): FixtureStatus => {
-  const shortStatus = status.toUpperCase();
-  
-  if (shortStatus === "NS" || shortStatus === "TBD" || shortStatus === "SUSP") return "UPCOMING";
-  if (shortStatus === "FT" || shortStatus === "AET" || shortStatus === "PEN") return "FT";
-  if ((shortStatus === "1H" || shortStatus === "2H") && elapsed) return "LIVE";
-  if (shortStatus === "HT") return "HT";
-  
-  return "UPCOMING";
+  try {
+    const topLeagueIds = [39, 140, 78, 135, 61, 2, 3, 848]; // Top leagues IDs
+    
+    const response = await apiClient.get<ApiResponse<any[]>>("/leagues", {
+      params: {
+        current: true,
+      },
+    });
+    
+    const leagues = response.data.response
+      .filter((league) => topLeagueIds.includes(league.league.id))
+      .map((league) => ({
+        id: league.league.id,
+        name: league.league.name,
+        logo: league.league.logo,
+        country: league.country.name,
+        flag: league.country.flag
+      }));
+    
+    return leagues;
+  } catch (error) {
+    console.error("Error fetching top leagues:", error);
+    return [];
+  }
 };

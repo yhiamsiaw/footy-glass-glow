@@ -1,8 +1,8 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Match, League, TopLeague, FixtureStatus } from "@/types/football";
 import { LeagueSection } from "@/components/LeagueSection";
-import { MainHeader } from "@/components/MainHeader";
 import { MobileHeader } from "@/components/MobileHeader";
 import { MobileFilterTabs } from "@/components/MobileFilterTabs";
 import { MobileNavigation } from "@/components/MobileNavigation";
@@ -10,8 +10,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { MatchCard } from "@/components/MatchCard";
 import { getLiveMatches, getTopLeagues, getTodayDate, getFixturesByDate, getMatchStatusType } from "@/utils/api";
 import { useToast } from "@/hooks/use-toast";
-import { Menu } from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { LogoFallback } from "@/components/LogoFallback";
 
 const Index = () => {
@@ -24,6 +23,7 @@ const Index = () => {
   const [statusFilter, setStatusFilter] = useState<FixtureStatus | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [selectedDate, setSelectedDate] = useState(getTodayDate());
+  const [favoriteMatches] = useLocalStorage<number[]>("favoriteMatches", []);
 
   const { toast } = useToast();
 
@@ -136,6 +136,11 @@ const Index = () => {
     };
   }, [activeTab, searchQuery, statusFilter, selectedDate, toast]);
 
+  // Filter for favorite matches
+  const favoriteMatchesList = matches.filter(match => 
+    favoriteMatches.includes(match.fixture.id)
+  );
+
   // Group matches by league
   const matchesByLeague = leagues.map(league => {
     const isPriority = priorityLeagueIds.includes(league.id);
@@ -182,11 +187,32 @@ const Index = () => {
     }
   };
 
+  // Function to create a league section component for favorites
+  const renderFavoritesSection = () => {
+    if (favoriteMatchesList.length === 0) return null;
+    
+    return (
+      <div className="mb-4">
+        <div className="league-header flex items-center p-3 bg-[#1a1a1a] border-l-2 border-blue-500">
+          <div className="w-5 h-5 mr-2 flex items-center justify-center">
+            <span className="text-blue-500">★</span>
+          </div>
+          <div>
+            <div className="text-sm font-semibold text-blue-500">Favorites</div>
+            <div className="text-xs text-gray-400">Your favorite matches</div>
+          </div>
+        </div>
+        
+        {favoriteMatchesList.map((match) => (
+          <MatchCard key={`fav-${match.fixture.id}`} match={match} isMobile={isMobile} />
+        ))}
+      </div>
+    );
+  };
+
   const renderDesktopLayout = () => (
-    <>
-      <MainHeader onSearch={handleSearch} onStatusFilter={handleStatusFilter} />
-      
-      <div className="flex flex-col md:flex-row max-w-6xl mx-auto">
+    <div className="max-w-6xl mx-auto">
+      <div className="flex flex-col md:flex-row">
         {/* Left Column - Navigation */}
         <div className="md:w-60 bg-[#0a111a] border-r border-gray-800 min-h-screen">
           <Sidebar leagues={topLeagues} loading={topLeagues.length === 0} />
@@ -250,14 +276,35 @@ const Index = () => {
                 ))}
               </div>
             ) : matches.length > 0 ? (
-              sortedMatchesByLeague.map(({ league, matches, isPriority }) => (
-                <LeagueSection 
-                  key={league.id} 
-                  league={league} 
-                  matches={matches} 
-                  isPriority={isPriority}
-                />
-              ))
+              <>
+                {/* Show favorites section first if we have any */}
+                {favoriteMatchesList.length > 0 && (
+                  <div className="mb-4">
+                    <div className="league-header flex items-center p-3 bg-gray-900 hover:bg-gray-800 border-l-2 border-blue-500">
+                      <div className="w-5 h-5 mr-2 flex items-center justify-center">
+                        <span className="text-yellow-500 fill-yellow-500">★</span>
+                      </div>
+                      <div>
+                        <div className="text-sm font-semibold text-blue-500">Favorites</div>
+                        <div className="text-xs text-gray-400">Your favorite matches</div>
+                      </div>
+                    </div>
+                    
+                    {favoriteMatchesList.map((match) => (
+                      <MatchCard key={`fav-${match.fixture.id}`} match={match} />
+                    ))}
+                  </div>
+                )}
+                
+                {sortedMatchesByLeague.map(({ league, matches, isPriority }) => (
+                  <LeagueSection 
+                    key={league.id} 
+                    league={league} 
+                    matches={matches} 
+                    isPriority={isPriority} 
+                  />
+                ))}
+              </>
             ) : (
               <div className="p-8 text-center">
                 <h2 className="text-lg font-bold mb-2">No matches found</h2>
@@ -291,7 +338,7 @@ const Index = () => {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 
   const renderMobileLayout = () => (
@@ -315,6 +362,9 @@ const Index = () => {
           </div>
         ) : matches.length > 0 ? (
           <div>
+            {/* Show favorites section first if we have any */}
+            {renderFavoritesSection()}
+            
             {sortedMatchesByLeague.map(({ league, matches }) => (
               <div key={league.id} className="mb-2">
                 <div className="league-header flex items-center p-3 bg-[#1a1a1a]">
@@ -324,10 +374,17 @@ const Index = () => {
                       alt=""
                       className="w-5 h-5 mr-2 object-contain"
                       onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = '';
-                        // Add a class to parent to indicate error 
-                        e.currentTarget.parentElement?.classList.add('logo-error');
+                        e.currentTarget.style.display = 'none';
+                        const parent = e.currentTarget.parentElement;
+                        if (parent) {
+                          const fallback = document.createElement('div');
+                          fallback.className = "w-5 h-5 mr-2 bg-gray-800 rounded-full flex items-center justify-center";
+                          const icon = document.createElement('span');
+                          icon.className = "text-gray-500 text-xs";
+                          icon.textContent = league.name.substring(0, 1);
+                          fallback.appendChild(icon);
+                          parent.insertBefore(fallback, parent.firstChild);
+                        }
                       }} 
                     />
                   ) : (
@@ -367,7 +424,12 @@ const Index = () => {
     </div>
   );
 
-  return isMobile ? renderMobileLayout() : renderDesktopLayout();
+  return (
+    <>
+      {/* Use the right layout based on screen size */}
+      {isMobile ? renderMobileLayout() : renderDesktopLayout()}
+    </>
+  );
 };
 
 export default Index;
