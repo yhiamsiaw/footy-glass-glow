@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, Clock, Home, Info, User, Star } from "lucide-react";
 import { LogoFallback } from "@/components/LogoFallback";
 import { useLocalStorage } from "@/hooks/use-local-storage";
+import { useToast } from "@/hooks/use-toast";
 
 interface MatchDetailsProps {
   match: MatchDetailsType;
@@ -22,6 +23,7 @@ export const MatchDetails = ({ match, isFavorite: initialIsFavorite = false }: M
   
   const [favoriteMatches, setFavoriteMatches] = useLocalStorage<number[]>("favoriteMatches", []);
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
+  const { toast } = useToast();
   
   // Get match status
   const statusType = getMatchStatusType(
@@ -47,8 +49,16 @@ export const MatchDetails = ({ match, isFavorite: initialIsFavorite = false }: M
   const toggleFavorite = () => {
     if (isFavorite) {
       setFavoriteMatches(favoriteMatches.filter(id => id !== fixture.id));
+      toast({
+        title: "Match removed from favorites",
+        description: `${teams.home.name} vs ${teams.away.name} removed from favorites`,
+      });
     } else {
       setFavoriteMatches([...favoriteMatches, fixture.id]);
+      toast({
+        title: "Match added to favorites",
+        description: `${teams.home.name} vs ${teams.away.name} added to favorites`,
+      });
     }
     setIsFavorite(!isFavorite);
   };
@@ -708,4 +718,3 @@ export const MatchDetails = ({ match, isFavorite: initialIsFavorite = false }: M
     }
   }
 };
-

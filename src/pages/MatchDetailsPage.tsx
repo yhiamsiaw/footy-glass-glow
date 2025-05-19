@@ -3,11 +3,10 @@ import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { MatchDetails } from "@/components/MatchDetails";
 import { Sidebar } from "@/components/Sidebar";
-import { ChevronLeft, Menu } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { getMatchDetails, getTopLeagues } from "@/utils/api";
 import { useToast } from "@/hooks/use-toast";
 import { MatchDetails as MatchDetailsType, TopLeague } from "@/types/football";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { MobileNavigation } from "@/components/MobileNavigation";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 

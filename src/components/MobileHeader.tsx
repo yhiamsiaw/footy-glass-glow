@@ -4,6 +4,9 @@ import { Search, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Sidebar } from "@/components/Sidebar";
+import { getTopLeagues } from "@/utils/api";
+import { useState, useEffect } from 'react';
+import { TopLeague } from "@/types/football";
 
 interface MobileHeaderProps {
   onSearch?: (query: string) => void;
@@ -11,6 +14,23 @@ interface MobileHeaderProps {
 
 export const MobileHeader = ({ onSearch }: MobileHeaderProps) => {
   const navigate = useNavigate();
+  const [topLeagues, setTopLeagues] = useState<TopLeague[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchTopLeagues = async () => {
+      try {
+        const leagues = await getTopLeagues();
+        setTopLeagues(leagues);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching top leagues:", error);
+        setLoading(false);
+      }
+    };
+
+    fetchTopLeagues();
+  }, []);
   
   return (
     <div className="sticky top-0 z-30 bg-[#0a111a] border-b border-gray-800">
@@ -36,7 +56,7 @@ export const MobileHeader = ({ onSearch }: MobileHeaderProps) => {
               </button>
             </SheetTrigger>
             <SheetContent side="right" className="w-[80%] bg-[#0a111a] border-l border-gray-800 p-0">
-              <Sidebar leagues={[]} loading={true} isMobile={true} />
+              <Sidebar leagues={topLeagues} loading={loading} />
             </SheetContent>
           </Sheet>
         </div>
