@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { MatchDetails as MatchDetailsType, EventType } from "@/types/football";
@@ -108,7 +109,7 @@ export const MatchDetails = ({ match, isFavorite: initialIsFavorite = false }: M
                 <div key={idx} className={`w-2 h-2 rounded-full ${
                   idx === 0 ? "bg-gray-400" : 
                   idx === 1 ? "bg-red-500" : 
-                  idx === 2 && idx === 3 ? "bg-green-500" : 
+                  idx === 2 || idx === 3 ? "bg-green-500" : 
                   "bg-gray-400"
                 }`}></div>
               ))}
@@ -168,7 +169,7 @@ export const MatchDetails = ({ match, isFavorite: initialIsFavorite = false }: M
             <div className="flex gap-1 mt-2">
               {[...Array(5)].map((_, idx) => (
                 <div key={idx} className={`w-2 h-2 rounded-full ${
-                  idx === 0 && idx === 1 && idx === 2 ? "bg-green-500" : 
+                  idx === 0 || idx === 1 || idx === 2 ? "bg-green-500" : 
                   idx === 3 ? "bg-red-500" : 
                   "bg-gray-400"
                 }`}></div>
@@ -707,3 +708,4 @@ export const MatchDetails = ({ match, isFavorite: initialIsFavorite = false }: M
     }
   }
 };
+
