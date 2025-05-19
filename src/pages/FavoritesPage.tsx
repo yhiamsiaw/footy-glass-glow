@@ -9,6 +9,7 @@ import { MatchCard } from "@/components/MatchCard";
 import { useToast } from "@/hooks/use-toast";
 import { MobileHeader } from "@/components/MobileHeader";
 import { Sidebar } from "@/components/Sidebar";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const FavoritesPage = () => {
   const [favoriteMatches] = useLocalStorage<number[]>("favoriteMatches", []);
@@ -42,7 +43,8 @@ const FavoritesPage = () => {
       try {
         const matchPromises = favoriteMatches.map(id => getMatchDetails(id));
         const matchResults = await Promise.all(matchPromises);
-        setMatches(matchResults);
+        setMatches(matchResults.filter(Boolean)); // Filter out any null values
+        console.log("Fetched favorite matches:", matchResults);
       } catch (error) {
         console.error("Error fetching favorite matches:", error);
         toast({
@@ -66,7 +68,7 @@ const FavoritesPage = () => {
         
         <div className="p-4">
           <div className="mb-4">
-            <h1 className="text-xl font-bold mb-2">Your Favorites</h1>
+            <h1 className="text-xl font-bold mb-2 text-white">Your Favorites</h1>
             <p className="text-sm text-gray-400">
               {matches.length > 0 
                 ? `You have ${matches.length} favorite ${matches.length === 1 ? 'match' : 'matches'}`
@@ -77,7 +79,7 @@ const FavoritesPage = () => {
           {loading ? (
             <div className="space-y-3 p-4">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="animate-pulse bg-[#1a1a1a] h-16 rounded-md"></div>
+                <Skeleton key={i} className="h-16" />
               ))}
             </div>
           ) : matches.length > 0 ? (
@@ -89,7 +91,7 @@ const FavoritesPage = () => {
           ) : (
             <div className="flex flex-col items-center justify-center h-[60vh] p-4 text-center bg-[#1a1a1a] rounded-lg">
               <Star className="h-16 w-16 text-gray-600 mb-4" />
-              <h2 className="text-lg font-bold mb-2">No favorites yet</h2>
+              <h2 className="text-lg font-bold mb-2 text-white">No favorites yet</h2>
               <p className="text-gray-400 max-w-xs">
                 Add your favorite matches by tapping the star icon next to them.
               </p>
@@ -109,7 +111,7 @@ const FavoritesPage = () => {
         <div className="flex flex-col md:flex-row">
           {/* Left Column - Navigation */}
           <div className="md:w-60 bg-[#0a111a] border-r border-gray-800 min-h-screen">
-            <Sidebar leagues={[]} loading={true} />
+            <Sidebar leagues={[]} loading={loading} />
           </div>
           
           {/* Middle Column - Content */}
@@ -126,7 +128,7 @@ const FavoritesPage = () => {
             {loading ? (
               <div className="space-y-3">
                 {[...Array(3)].map((_, i) => (
-                  <div key={i} className="animate-pulse bg-[#1a1a1a] h-20 rounded-md"></div>
+                  <Skeleton key={i} className="h-20" />
                 ))}
               </div>
             ) : matches.length > 0 ? (

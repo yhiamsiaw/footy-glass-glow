@@ -12,6 +12,7 @@ import ContactPage from "./pages/ContactPage";
 import SearchPage from "./pages/SearchPage";
 import FavoritesPage from "./pages/FavoritesPage";
 import NotFound from "./pages/NotFound";
+import './index.css';
 
 const queryClient = new QueryClient();
 
