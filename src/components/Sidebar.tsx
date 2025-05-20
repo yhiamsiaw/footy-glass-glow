@@ -15,6 +15,8 @@ interface SidebarProps {
 export const Sidebar = ({ leagues, loading, isMobile = false }: SidebarProps) => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  // Move the logoError state outside the mapping function
+  const [logoErrors, setLogoErrors] = useState<Record<number, boolean>>({});
 
   const toggleSidebar = () => {
     setCollapsed(!collapsed);
@@ -28,6 +30,10 @@ export const Sidebar = ({ leagues, loading, isMobile = false }: SidebarProps) =>
 
   const isActive = (path: string) => {
     return location.pathname === path;
+  };
+
+  const handleLogoError = (leagueId: number) => {
+    setLogoErrors(prev => ({ ...prev, [leagueId]: true }));
   };
 
   return (
@@ -86,43 +92,40 @@ export const Sidebar = ({ leagues, loading, isMobile = false }: SidebarProps) =>
               ))}
             </div>
           ) : (
-            leagues.map((league) => {
-              const [logoError, setLogoError] = useState(false);
-              return (
-                <Link
-                  key={league.id}
-                  to={`/league/${league.id}`}
-                  className={cn(
-                    "flex items-center gap-3 p-3 rounded-lg transition-all",
-                    location.pathname.includes(`/league/${league.id}`) 
-                      ? "bg-blue-600/20 text-blue-400" 
-                      : "hover:bg-white/10 text-gray-300 hover:text-white",
-                    collapsed ? "justify-center" : ""
-                  )}
-                >
-                  {logoError ? (
-                    <LogoFallback className="h-6 w-6" teamName={league.name} />
-                  ) : (
-                    <img
-                      src={league.logo}
-                      alt={league.name}
-                      className="h-6 w-6 object-contain"
-                      onError={() => setLogoError(true)}
-                    />
-                  )}
-                  {!collapsed && (
-                    <div className="overflow-hidden">
-                      <p className="text-sm whitespace-nowrap overflow-hidden text-ellipsis">
-                        {league.name}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {league.country}
-                      </p>
-                    </div>
-                  )}
-                </Link>
-              );
-            })
+            leagues.map((league) => (
+              <Link
+                key={league.id}
+                to={`/league/${league.id}`}
+                className={cn(
+                  "flex items-center gap-3 p-3 rounded-lg transition-all",
+                  location.pathname.includes(`/league/${league.id}`) 
+                    ? "bg-blue-600/20 text-blue-400" 
+                    : "hover:bg-white/10 text-gray-300 hover:text-white",
+                  collapsed ? "justify-center" : ""
+                )}
+              >
+                {logoErrors[league.id] ? (
+                  <LogoFallback className="h-6 w-6" teamName={league.name} />
+                ) : (
+                  <img
+                    src={league.logo}
+                    alt={league.name}
+                    className="h-6 w-6 object-contain"
+                    onError={() => handleLogoError(league.id)}
+                  />
+                )}
+                {!collapsed && (
+                  <div className="overflow-hidden">
+                    <p className="text-sm whitespace-nowrap overflow-hidden text-ellipsis">
+                      {league.name}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {league.country}
+                    </p>
+                  </div>
+                )}
+              </Link>
+            ))
           )}
         </div>
       </div>
