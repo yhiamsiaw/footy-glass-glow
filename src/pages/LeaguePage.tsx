@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { getLeagueStandings, getTopLeagues } from "@/utils/api";
@@ -10,13 +11,18 @@ import { cn } from "@/lib/utils";
 import { Calendar } from "lucide-react";
 import { MobileNavigation } from "@/components/MobileNavigation";
 
-interface LeagueParams {
+// Fix the interface to make it compatible with useParams
+interface LeagueParamsType {
   id?: string;
   section?: string;
 }
 
 const LeaguePage = () => {
-  const { id, section = "standings" } = useParams<LeagueParams>();
+  // Update the useParams hook to use a Record type instead of the interface
+  const params = useParams<Record<string, string>>();
+  const id = params.id;
+  const section = params.section || "standings";
+  
   const navigate = useNavigate();
   const [league, setLeague] = useState<League | null>(null);
   const [standings, setStandings] = useState<any[]>([]);
