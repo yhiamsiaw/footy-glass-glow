@@ -2,7 +2,7 @@
 import axios from "axios";
 import { ApiResponse, Match, MatchDetails, TopLeague } from "@/types/football";
 
-const API_KEY = "483ba1cf5072a6dbf7d1d7ca6e2ffc56"; // Updated API key
+const API_KEY = "381f6b842bf8bb343d7f3e43264b32f3"; // Updated API key
 const API_BASE_URL = "https://v3.football.api-sports.io";
 
 // Configure axios instance

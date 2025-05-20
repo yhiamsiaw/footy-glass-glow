@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { MatchDetails as MatchDetailsType, EventType } from "@/types/football";
@@ -16,6 +15,16 @@ interface MatchDetailsProps {
 }
 
 export const MatchDetails = ({ match, isFavorite: initialIsFavorite = false }: MatchDetailsProps) => {
+  // Add a safety check to ensure the match has all required properties
+  if (!match || !match.fixture || !match.teams || !match.goals || !match.league) {
+    console.error("Match details is missing required properties:", match);
+    return (
+      <div className="bg-[#121212] rounded-lg p-8 text-center">
+        <p className="text-red-500 font-medium">Unable to display match details due to missing data.</p>
+      </div>
+    );
+  }
+
   const { fixture, teams, goals, score, events, lineups, statistics } = match;
   const [homeLogoError, setHomeLogoError] = useState(false);
   const [awayLogoError, setAwayLogoError] = useState(false);

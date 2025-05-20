@@ -12,9 +12,17 @@ import ContactPage from "./pages/ContactPage";
 import SearchPage from "./pages/SearchPage";
 import FavoritesPage from "./pages/FavoritesPage";
 import NotFound from "./pages/NotFound";
+import { Footer } from "./components/Footer";
 import './index.css';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -22,17 +30,22 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/match/:id" element={<MatchDetailsPage />} />
-          <Route path="/league/:id" element={<LeaguePage />} />
-          <Route path="/league/:id/:section" element={<LeaguePage />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/search" element={<SearchPage />} />
-          <Route path="/favorites" element={<FavoritesPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <div className="flex flex-col min-h-screen">
+          <div className="flex-grow">
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/match/:id" element={<MatchDetailsPage />} />
+              <Route path="/league/:id" element={<LeaguePage />} />
+              <Route path="/league/:id/:section" element={<LeaguePage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/contact" element={<ContactPage />} />
+              <Route path="/search" element={<SearchPage />} />
+              <Route path="/favorites" element={<FavoritesPage />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </div>
+          <Footer />
+        </div>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

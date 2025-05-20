@@ -129,10 +129,6 @@ export const Sidebar = ({ leagues, loading, isMobile = false }: SidebarProps) =>
           )}
         </div>
       </div>
-
-      <div className="mt-auto p-4 text-center text-xs text-gray-500 border-t border-gray-800">
-        {!collapsed && "© 2025 LiveScore"}
-      </div>
     </div>
   );
 };

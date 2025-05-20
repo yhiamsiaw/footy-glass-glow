@@ -15,6 +15,7 @@ const MatchDetailsPage = () => {
   const navigate = useNavigate();
   const [match, setMatch] = useState<MatchDetailsType | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [topLeagues, setTopLeagues] = useState<TopLeague[]>([]);
   const [isMobile, setIsMobile] = useState(false);
   const { toast } = useToast();
@@ -52,15 +53,31 @@ const MatchDetailsPage = () => {
   // Fetch match details
   useEffect(() => {
     const fetchMatchDetails = async () => {
-      if (!id) return;
+      if (!id) {
+        setError("No match ID provided");
+        setLoading(false);
+        return;
+      }
       
       setLoading(true);
+      setError(null);
+      
       try {
+        console.log("Fetching match details for ID:", id);
         const matchId = parseInt(id);
         const matchDetails = await getMatchDetails(matchId);
-        setMatch(matchDetails);
+        console.log("Match details received:", matchDetails);
+        
+        if (!matchDetails) {
+          console.error("Match details is undefined");
+          setError("Failed to load match details");
+          setMatch(null);
+        } else {
+          setMatch(matchDetails);
+        }
       } catch (error) {
         console.error("Error fetching match details:", error);
+        setError("Error loading match details. Please try again later.");
         toast({
           title: "Error fetching match details",
           description: "Please try again later",
@@ -84,7 +101,7 @@ const MatchDetailsPage = () => {
     }, 60000); // Update every minute for live matches
     
     return () => clearInterval(refreshInterval);
-  }, [id, toast, match]);
+  }, [id, toast]); // Removed match from dependencies to avoid refresh issues
 
   if (isMobile) {
     return (
@@ -115,6 +132,17 @@ const MatchDetailsPage = () => {
                 <div className="h-24 bg-[#222] rounded"></div>
               </div>
             </div>
+          ) : error ? (
+            <div className="p-12 bg-[#1a1a1a] rounded-lg text-center">
+              <h2 className="text-xl font-bold mb-3">Error</h2>
+              <p className="text-gray-400 mb-6">{error}</p>
+              <Link 
+                to="/"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
+              >
+                View all matches
+              </Link>
+            </div>
           ) : match ? (
             <MatchDetails match={match} isFavorite={isFavorite} />
           ) : (
@@ -140,7 +168,7 @@ const MatchDetailsPage = () => {
 
   return (
     <div className="min-h-screen bg-[#0c1218] text-white">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row">
           {/* Left Column - Navigation */}
           <div className="md:w-60 bg-[#0a111a] border-r border-gray-800 min-h-screen">
@@ -169,6 +197,17 @@ const MatchDetailsPage = () => {
                     <div className="h-4 bg-gray-700 rounded w-1/2"></div>
                     <div className="h-24 bg-gray-700 rounded"></div>
                   </div>
+                </div>
+              ) : error ? (
+                <div className="p-12 bg-gray-800/50 rounded-lg text-center">
+                  <h2 className="text-xl font-bold mb-3">Error</h2>
+                  <p className="text-muted-foreground mb-6">{error}</p>
+                  <Link 
+                    to="/"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
+                  >
+                    View all matches
+                  </Link>
                 </div>
               ) : match ? (
                 <MatchDetails match={match} isFavorite={isFavorite} />
